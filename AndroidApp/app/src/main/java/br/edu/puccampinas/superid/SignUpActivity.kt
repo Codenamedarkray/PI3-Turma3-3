@@ -262,9 +262,10 @@ fun SignUpForm(modifier: Modifier = Modifier) {
 
                 val created = performSignUp(context, name, email, password)
 
-                val intent = Intent(context, MainActivity::class.java)
-                context.startActivity(intent)
-
+                if(created) {
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                }
 
             },
             modifier = Modifier.fillMaxWidth()
