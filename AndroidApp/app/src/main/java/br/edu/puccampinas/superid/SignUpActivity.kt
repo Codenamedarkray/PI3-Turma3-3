@@ -79,10 +79,9 @@ class SignUpActivity : ComponentActivity() {
 
 
 
-fun createUser(name: String, email: String, password: String, androidId: String): Boolean{
+fun createUser(name: String, email: String, password: String, androidId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
     val db = Firebase.firestore
     val auth = Firebase.auth
-    var isAccountCreated = false
 
     auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
@@ -90,7 +89,7 @@ fun createUser(name: String, email: String, password: String, androidId: String)
                 Log.i("AUTH", "Criação de conta bem-sucedida.")
                 val userId = auth.currentUser?.uid
 
-                if(userId != null){
+                if (userId != null) {
                     Log.i("AUTH", "DADOS SALVOS")
 
                     val user: HashMap<String, String> = hashMapOf(
@@ -102,30 +101,26 @@ fun createUser(name: String, email: String, password: String, androidId: String)
                     db.collection("users").document(userId).set(user)
                         .addOnCompleteListener {
                             Log.d("FIREBASE", "Sucesso ao salvar os dados")
+                            sendVerificationEmail()
+                            onSuccess() // Chama o callback de sucesso
                         }.addOnFailureListener { e ->
                             Log.e("FIREBASE", "Erro ao salvar dados", e)
+                            onFailure(e)
                         }
-
-                    sendVerificationEmail()
-
-                    isAccountCreated = true
-                }else{
+                } else {
                     Log.e("AUTH", "ERRO AO RECUPERAR O UID")
+                    onFailure(Exception("Erro ao recuperar o UID"))
                 }
-
-            }else{
+            } else {
                 Log.e("AUTH", "OCORREU UM ERRO")
+                onFailure(task.exception ?: Exception("Erro desconhecido"))
             }
-        }.addOnFailureListener{ e ->
+        }.addOnFailureListener { e ->
             Log.e("AUTH", "ERRO AO SALVAR", e)
+            onFailure(e)
         }
-
-    return isAccountCreated
 }
 
-/**
- * Envia o email de verificação para o novo usuário
- */
 fun sendVerificationEmail() {
     val auth = Firebase.auth
     val user: FirebaseUser? = auth.currentUser
@@ -133,82 +128,56 @@ fun sendVerificationEmail() {
     user?.sendEmailVerification()
         ?.addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                // E-mail de validação enviado com sucesso
                 Log.d("AUTH", "EMAIL ENVIADO COM SUCESSO")
             } else {
-                // Erro ao enviar e-mail de validação
                 Log.e("AUTH", "Erro ao enviar e-mail de validação: ${task.exception?.message}")
             }
         }
 }
 
-/**
- * verifica se os campos não estão vazios
- */
-fun fieldsAreNull(name: String, email: String, password: String): Boolean{
-    if(email == "" || password == "" || name == "") {
+fun fieldsAreNull(name: String, email: String, password: String): Boolean {
+    if (email == "" || password == "" || name == "") {
         Log.i("FIREBASE", "CAMPOS ESTÃO NULOS")
         return true
     }
-
     return false
 }
 
-/**
- * valida se o formato do email é correto por regex
- */
 fun emailIsInvalid(email: String): Boolean {
     val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
-    if(!emailRegex.matches(email)){
+    if (!emailRegex.matches(email)) {
         Log.i("FIREBASE", "EMAIL INVALIDO")
         return true
     }
     return false
 }
 
-/**
- * Valida se a senha segue as regras estabelecidas
- */
-fun passwordIsInvalid(password: String): Boolean{
-    if(password.length < 6){
+fun passwordIsInvalid(password: String): Boolean {
+    if (password.length < 6) {
         Log.i("FIREBASE", "SENHA INVALIDA")
         return true
     }
-
     return false
 }
 
 fun validateSignUpFields(name: String, email: String, password: String): Boolean {
-
-    if(
-        fieldsAreNull(name, email, password) ||
-        emailIsInvalid(email) ||
-        passwordIsInvalid(password)
-    ){
+    if (fieldsAreNull(name, email, password) || emailIsInvalid(email) || passwordIsInvalid(password)) {
         return false
     }
-
-    //retorna verdadeiro se todos os campos forem válidos
     return true
 }
 
-fun performSignUp(context: Context, name: String, email: String, password: String): Boolean{
-    //obtem o ID da instalação do dispositivo android
+fun performSignUp(context: Context, name: String, email: String, password: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
     val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     Log.i("IMEI", "$androidId")
 
-    val validUser = validateSignUpFields(name, email, password)
-
-    if(!validUser){
-        return false
+    if (!validateSignUpFields(name, email, password)) {
+        onFailure(Exception("Campos inválidos"))
+        return
     }
 
-    val isUserCreated = createUser(name, email, password, androidId)
-
-    return isUserCreated
-
+    createUser(name, email, password, androidId, onSuccess, onFailure)
 }
-
 
 @Composable
 fun SignUpForm(modifier: Modifier = Modifier) {
@@ -259,14 +228,19 @@ fun SignUpForm(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-
-                val created = performSignUp(context, name, email, password)
-
-                if(created) {
-                    val intent = Intent(context, MainActivity::class.java)
-                    context.startActivity(intent)
-                }
-
+                performSignUp(
+                    context,
+                    name,
+                    email,
+                    password,
+                    onSuccess = {
+                        val intent = Intent(context, MainActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    onFailure = { exception ->
+                        Log.e("SIGNUP", "ERRO AO CRIAR CONTA: ${exception.message}")
+                    }
+                )
             },
             modifier = Modifier.fillMaxWidth()
         ) {
