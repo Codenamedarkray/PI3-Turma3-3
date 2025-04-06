@@ -12,9 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
-import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,10 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SuperIDTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    MainScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
@@ -34,17 +28,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun MainScreen(modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
+        text = "Você está logado",
         modifier = modifier
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun GreetingPreview2() {
     SuperIDTheme {
-        Greeting("Android")
+        MainScreen()
     }
 }
