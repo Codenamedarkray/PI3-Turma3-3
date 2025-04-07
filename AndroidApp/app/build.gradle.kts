@@ -59,6 +59,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //Dependencia para permitir o uso do navgation compose
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
     // Dependencias obrigatórias do firebase
     implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
     implementation("com.google.firebase:firebase-analytics")
