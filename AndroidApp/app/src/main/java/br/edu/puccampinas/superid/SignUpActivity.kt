@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import br.edu.puccampinas.superid.functions.validationUtils
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.ktx.auth
@@ -37,7 +38,6 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlin.String
 import kotlin.collections.HashMap
-import com.google.firebase.auth.FirebaseUser
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,11 +77,17 @@ class SignUpActivity : ComponentActivity() {
     }
 }
 
-
-
-fun createUser(name: String, email: String, password: String, androidId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+/**
+ * Função que cria um usúario no Firebase Authentication,
+ * e caso bem sucedido, salva as informações do usuário e dispositivo
+ * no Firestore, no campo user
+ */
+fun createUser(context: Context, name: String, email: String, password: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
     val db = Firebase.firestore
     val auth = Firebase.auth
+
+    val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    Log.i("IMEI", "$androidId")
 
     auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
@@ -121,9 +127,11 @@ fun createUser(name: String, email: String, password: String, androidId: String,
         }
 }
 
+/**
+ * Envia email de verificação via firebase Authentication para o novo usuário
+ */
 fun sendVerificationEmail() {
-    val auth = Firebase.auth
-    val user: FirebaseUser? = auth.currentUser
+    val user = Firebase.auth.currentUser
 
     user?.sendEmailVerification()
         ?.addOnCompleteListener { task ->
@@ -135,7 +143,10 @@ fun sendVerificationEmail() {
         }
 }
 
-fun fieldsAreNull(name: String, email: String, password: String): Boolean {
+/**
+ * Verifica se os campos preenchidos para o cadastro estão vazios
+ */
+fun areSignUpFieldsNull(name: String, email: String, password: String): Boolean {
     if (email == "" || password == "" || name == "") {
         Log.i("FIREBASE", "CAMPOS ESTÃO NULOS")
         return true
@@ -143,40 +154,28 @@ fun fieldsAreNull(name: String, email: String, password: String): Boolean {
     return false
 }
 
-fun emailIsInvalid(email: String): Boolean {
-    val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
-    if (!emailRegex.matches(email)) {
-        Log.i("FIREBASE", "EMAIL INVALIDO")
-        return true
-    }
-    return false
-}
-
-fun passwordIsInvalid(password: String): Boolean {
-    if (password.length < 6) {
-        Log.i("FIREBASE", "SENHA INVALIDA")
-        return true
-    }
-    return false
-}
-
+/**
+ * Chama as funções de validação dos campos do cadastro,
+ * para descobrir se todos são validos
+ */
 fun validateSignUpFields(name: String, email: String, password: String): Boolean {
-    if (fieldsAreNull(name, email, password) || emailIsInvalid(email) || passwordIsInvalid(password)) {
+    if (areSignUpFieldsNull(name, email, password) || validationUtils.emailIsInvalid(email) || validationUtils.passwordIsInvalid(password)) {
         return false
     }
     return true
 }
 
+/**
+ * Chama a validação dos campos e criação de usuário
+ */
 fun performSignUp(context: Context, name: String, email: String, password: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-    val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-    Log.i("IMEI", "$androidId")
 
     if (!validateSignUpFields(name, email, password)) {
         onFailure(Exception("Campos inválidos"))
         return
     }
 
-    createUser(name, email, password, androidId, onSuccess, onFailure)
+    createUser(context, name, email, password, onSuccess, onFailure)
 }
 
 @Composable
