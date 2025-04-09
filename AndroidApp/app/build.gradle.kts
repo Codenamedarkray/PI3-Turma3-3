@@ -59,6 +59,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //Dependencia de fonte do google
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.4.3")
+
+
     //Dependencia para permitir o uso do navgation compose
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
