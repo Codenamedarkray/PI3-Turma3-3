@@ -3,6 +3,7 @@ package br.edu.puccampinas.superid.functions
 import android.content.Context
 import android.provider.Settings
 import android.util.Log
+import br.edu.puccampinas.superid.functions.validationUtils.saveEmailLocally
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -43,6 +44,7 @@ fun performSignIn(
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
+                saveEmailLocally(context, email)
                 Log.i("LOGIN", "Login realizado com sucesso.")
                 onSuccess()
             } else {

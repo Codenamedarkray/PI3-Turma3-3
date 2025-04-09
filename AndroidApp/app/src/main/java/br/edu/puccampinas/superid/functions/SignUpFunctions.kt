@@ -3,6 +3,7 @@ package br.edu.puccampinas.superid.functions
 import android.content.Context
 import android.provider.Settings
 import android.util.Log
+import br.edu.puccampinas.superid.functions.validationUtils.saveEmailLocally
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -36,9 +37,14 @@ fun createUser(context: Context, name: String, email: String, password: String, 
 
                     db.collection("users").document(userId).set(user)
                         .addOnCompleteListener {
-                            Log.d("FIREBASE", "Sucesso ao salvar os dados")
+
+                            saveEmailLocally(context, email)
                             sendVerificationEmail()
+
+                            Log.d("FIREBASE", "Sucesso ao salvar os dados")
+
                             onSuccess() // Chama o callback de sucesso
+
                         }.addOnFailureListener { e ->
                             Log.e("FIREBASE", "Erro ao salvar dados", e)
                             onFailure(e)

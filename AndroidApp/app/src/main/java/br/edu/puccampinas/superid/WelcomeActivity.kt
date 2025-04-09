@@ -33,6 +33,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import br.edu.puccampinas.superid.functions.validationUtils.checkUserAuthentication
 import br.edu.puccampinas.superid.screens.TermsScreen
 import br.edu.puccampinas.superid.screens.WelcomeScreen
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
@@ -55,6 +56,13 @@ class WelcomeActivity : ComponentActivity() {
 @Composable
 fun WelcomeNav(modifier: Modifier) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val userAuthenticated = checkUserAuthentication(context)
+
+    if(userAuthenticated){
+        val intent = Intent(context, ReAuthenticationActivity::class.java)
+        context.startActivity(intent)
+    }
 
     NavHost(navController = navController, startDestination = "welcome") {
         composable("welcome") { WelcomeScreen(navController) }

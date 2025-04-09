@@ -33,6 +33,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import br.edu.puccampinas.superid.functions.validationUtils.checkUserAuthentication
 import br.edu.puccampinas.superid.screens.SignInForm
 import br.edu.puccampinas.superid.screens.SignUpForm
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
