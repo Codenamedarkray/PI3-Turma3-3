@@ -90,7 +90,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 performSignUp(
                     context,
                     name,
-                    email,
+                    email.replace(" ", ""),
                     password,
                     onSuccess = {
                         val intent = Intent(context, MainActivity::class.java)

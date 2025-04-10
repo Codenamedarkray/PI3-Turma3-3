@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,6 +35,7 @@ import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainActivity
 import br.edu.puccampinas.superid.WelcomeActivity
 import br.edu.puccampinas.superid.functions.performSignIn
+import br.edu.puccampinas.superid.functions.recoverPassword
 import br.edu.puccampinas.superid.functions.validationUtils.getSavedEmail
 import br.edu.puccampinas.superid.functions.validationUtils.passwordIsInvalid
 import br.edu.puccampinas.superid.functions.validationUtils.reauthenticateUser
@@ -42,8 +44,9 @@ import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 @Composable
 fun ReAuthenticationForm(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-
     var password by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf<String?>(null) }
+    var messageColor by remember { mutableStateOf(Color.Unspecified) }
 
     Column(
         modifier = modifier
@@ -82,6 +85,43 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Entrar")
+        }
+
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 16.dp)
+        ){
+            Text(
+                "Esqueceu a senha?",
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(
+                "Clique Aqui!",
+                color = Color.Blue,
+                fontSize = 16.sp,
+                style = TextStyle(textDecoration = TextDecoration.Underline),
+                modifier = Modifier.clickable {
+                    recoverPassword(
+                        email = getSavedEmail(context)!!,
+                        onSuccess = {
+                            message = "Link de recuperação enviado para o e-mail"
+                            messageColor = Color.Blue
+                        },
+                        onFailure = {
+                            message = it.message
+                            messageColor = Color.Red
+                        }
+                    )
+                }
+            )
+        }
+
+        message?.let {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = it, color = messageColor)
         }
 
     }

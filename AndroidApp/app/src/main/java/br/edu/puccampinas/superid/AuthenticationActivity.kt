@@ -34,6 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserAuthentication
+import br.edu.puccampinas.superid.screens.RecoverPasswordForm
 import br.edu.puccampinas.superid.screens.SignInForm
 import br.edu.puccampinas.superid.screens.SignUpForm
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
@@ -61,6 +62,7 @@ fun AuthenticationNav(modifier: Modifier) {
     NavHost(navController = navController, startDestination = "signin") {
         composable("signin") { SignInForm(navController = navController) }
         composable("signup") { SignUpForm(navController = navController) }
+        composable("recover") {RecoverPasswordForm(navController = navController)}
     }
 }
 

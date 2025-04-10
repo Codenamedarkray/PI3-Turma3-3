@@ -78,11 +78,33 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         )
 
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 16.dp)
+        ){
+            Text(
+                "Esqueceu a senha?",
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(
+                "Clique Aqui!",
+                color = Color.Blue,
+                fontSize = 16.sp,
+                style = TextStyle(textDecoration = TextDecoration.Underline),
+                modifier = Modifier.clickable {
+                    navController.navigate("recover")
+                }
+            )
+        }
+
         Button(
             onClick = {
                 performSignIn(
                     context,
-                    email,
+                    email.replace(" ", ""),
                     password,
                     onSuccess = {
                         val intent = Intent(context, MainActivity::class.java)

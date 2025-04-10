@@ -11,7 +11,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
-object validationUtils{
+object validationUtils {
     /**
      * Verifica por meio de regex se o formato do email inserido é valido
      */
@@ -39,7 +39,7 @@ object validationUtils{
      * Salva o email do usuário para ele se reautenticar ao entrar novamente no
      * app
      */
-    fun saveEmailLocally(context: Context, email: String){
+    fun saveEmailLocally(context: Context, email: String) {
         val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         prefs.edit() { putString("user_email", email) }
     }
@@ -100,12 +100,39 @@ object validationUtils{
     /**
      * Checa se o usuário está autenticado
      */
-    fun checkUserAuthentication(context: Context): Boolean{
+    fun checkUserAuthentication(context: Context): Boolean {
         val user = Firebase.auth.currentUser
         val email = getSavedEmail(context)
 
         return user != null && email != null
 
     }
+
+    fun checkUserEmailVerification(
+        onResult: (Boolean) -> Unit,
+        onFailure: (Exception) -> Unit
+    )
+    {
+        val user = Firebase.auth.currentUser
+        var userVerified = false
+
+        if (user == null) {
+            onResult(false)
+            return
+        }
+
+        user.reload()
+            .addOnSuccessListener {
+                userVerified = user.isEmailVerified
+                Log.i("VERIFICATION", "Dados atualizados, verificação $userVerified")
+                onResult(userVerified)
+            }
+            .addOnFailureListener {
+                Log.e("VERIFICATION" , "Falha ao atualizar as informações")
+                onFailure(it)
+            }
+
+    }
+
 
 }
