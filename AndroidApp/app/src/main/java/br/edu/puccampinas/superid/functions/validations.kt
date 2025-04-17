@@ -108,6 +108,10 @@ object validationUtils {
 
     }
 
+    /**
+     * Checa se o email do usuário foi validado via
+     * email de validação
+     */
     fun checkUserEmailVerification(
         onResult: (Boolean) -> Unit,
         onFailure: (Exception) -> Unit

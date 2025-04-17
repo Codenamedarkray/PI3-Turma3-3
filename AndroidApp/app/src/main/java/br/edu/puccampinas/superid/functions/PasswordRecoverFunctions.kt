@@ -5,6 +5,10 @@ import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerifi
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
+/**
+ * Função de envio de email de recuperação de senha
+ * Funciona apenas se o usuário estiver com o email validado
+ */
 fun recoverPassword(
     email: String,
     onSuccess: () -> Unit,

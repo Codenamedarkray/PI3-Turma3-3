@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainScreen
 import br.edu.puccampinas.superid.functions.recoverPassword
+import br.edu.puccampinas.superid.functions.validationUtils.emailIsInvalid
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 
 @Composable
@@ -71,17 +72,22 @@ fun RecoverPasswordForm(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            recoverPassword(
-                email = email,
-                onSuccess = {
-                    message = "Link de recuperação enviado para o e-mail"
-                    messageColor = Color.Blue
-                },
-                onFailure = {
-                    message = it.message
-                    messageColor = Color.Red
-                }
-            )
+            if(emailIsInvalid(email)) {
+                recoverPassword(
+                    email = email,
+                    onSuccess = {
+                        message = "Link de recuperação enviado para o e-mail"
+                        messageColor = Color.Blue
+                    },
+                    onFailure = {
+                        message = it.message
+                        messageColor = Color.Red
+                    }
+                )
+            }else{
+                message = "Email Invalido"
+                messageColor = Color.Red
+            }
         }, modifier = Modifier.fillMaxWidth()) {
             Text("Enviar link")
         }

@@ -7,7 +7,9 @@ import br.edu.puccampinas.superid.functions.validationUtils.saveEmailLocally
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
-
+/**
+ * Verifica se os campos digitados durante o signIn são nulos
+ */
 fun areSignInFieldsNull(email: String, password: String): Boolean {
     if (email.isEmpty() || password.isEmpty()) {
         Log.i("FIREBASE", "CAMPOS ESTÃO NULOS")
@@ -16,6 +18,10 @@ fun areSignInFieldsNull(email: String, password: String): Boolean {
     return false
 }
 
+/**
+ * Valida se os Campos de SignUp foram preenchidos corretamente,
+ * chamando as funções que fazem cada validação individual
+ */
 fun validateSignInFields(email: String, password: String): Boolean {
     if (areSignInFieldsNull(email, password) || validationUtils.emailIsInvalid(email) || validationUtils.passwordIsInvalid(password)) {
         return false
@@ -23,6 +29,9 @@ fun validateSignInFields(email: String, password: String): Boolean {
     return true
 }
 
+/**
+ * Realiza o SignIn, por uma chamada no firebase Auth
+ */
 fun performSignIn(
     context: Context,
     email: String,
