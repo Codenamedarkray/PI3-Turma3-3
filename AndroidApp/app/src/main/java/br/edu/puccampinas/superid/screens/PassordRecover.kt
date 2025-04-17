@@ -29,7 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import br.edu.puccampinas.superid.MainScreen
 import br.edu.puccampinas.superid.functions.recoverPassword
 import br.edu.puccampinas.superid.functions.validationUtils.emailIsInvalid
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
