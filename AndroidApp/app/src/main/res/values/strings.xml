@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SuperID</string>
+    <string name="title_activity_sign_up">SignUpActivity</string>
+    <string name="title_activity_sign_in">SignInActivity</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_authentication">AuthenticationActivity</string>
+    <string name="title_activity_re_authentication">ReAuthenticationActivity</string>
 </resources>

@@ -59,11 +59,19 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //Dependencia de fonte do google
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.4.3")
+
+
+    //Dependencia para permitir o uso do navgation compose
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
     // Dependencias obrigatórias do firebase
     implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
     implementation("com.google.firebase:firebase-analytics")
 
     //lib do firestore
     implementation("com.google.firebase:firebase-firestore-ktx:25.1.3")
+    implementation("com.google.firebase:firebase-auth-ktx:23.2.0")
 
 }
