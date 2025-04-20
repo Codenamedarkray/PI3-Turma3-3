@@ -17,18 +17,42 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import org.checkerframework.checker.units.qual.Current
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(){
     val context = LocalContext.current
+    var verifiedEmail by remember { mutableStateOf(false) }
+
+    val message = "Por favor, verifique seu email para poder recuperar senha"
+    val messageColor = Color.Red
+
+    checkUserEmailVerification(
+        onResult = { isVerified ->
+        if (isVerified) {
+            verifiedEmail = true
+        }
+
+    },
+        onFailure = { e ->
+
+        })
 
     Scaffold(
         topBar = {
@@ -71,7 +95,9 @@ fun MainScreen(){
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-
+            if (!verifiedEmail) {
+                Text(message, color = messageColor)
+            }
 
         }
 

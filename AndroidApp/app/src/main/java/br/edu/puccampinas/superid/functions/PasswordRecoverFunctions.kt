@@ -21,7 +21,7 @@ fun recoverPassword(
                 return@checkUserEmailVerification
             }
 
-            // agora sim, enviar e-mail de redefinição
+            // envio do email de redefinição
             Firebase.auth.sendPasswordResetEmail(email)
                 .addOnSuccessListener { onSuccess() }
                 .addOnFailureListener { onFailure(it) }
