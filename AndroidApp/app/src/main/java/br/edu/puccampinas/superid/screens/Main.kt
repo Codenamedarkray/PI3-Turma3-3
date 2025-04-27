@@ -55,8 +55,14 @@ fun MainScreen() {
     val uid = Firebase.auth.currentUser?.uid
     val db = Firebase.firestore
 
+    //guarda lista com nomes das categorias
     var categories by remember { mutableStateOf<List<DocumentSnapshot>>(emptyList()) }
+
+    //guarda um Mapa ligando o nome da categoria com um par de valores(nome da plataforma, Mapa
+    // ligando atributo da plataforma com valor do atributo)
+
     var passwordsMap by remember { mutableStateOf<Map<String, List<Pair<String, Map<String, Any?>>>>>(emptyMap()) }
+    // Guada o nome das categorias ligadas a se elas estão expandidas mostrando as senhas
     val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
     val message = "Por favor, verifique seu email para poder recuperar senha"
@@ -73,20 +79,29 @@ fun MainScreen() {
         }
     )
 
+    /**
+     * rotina que pega as informações para atualizar a composição da tela
+     * adiciona as categorias a lista de categorias e as senhas ao mapa de senhas
+     */
     LaunchedEffect(uid) {
         if (uid != null) {
+            //fetch nas categorias do usuário
             db.collection("users").document(uid).collection("category")
                 .get()
                 .addOnSuccessListener { snapshot ->
+                    //obtém os documentos do fetch e salva na lista de categorias
                     val cats = snapshot.documents
                     categories = cats
 
+                    //Para cada documento de categoria, faz o mapa para as senhas
                     cats.forEach { category ->
+                        //coloca por padrão que a categoria está fechada na visualização
                         expandedMap.putIfAbsent(category.id, false)
 
+                        //Pega os dados da categoria ou coloca como vazia a lista
                         val fields = category.data ?: emptyMap<String, Any>()
 
-                        // Pegamos só os campos que não sejam "deletable"
+                        // Pega só os campos que não sejam "deletable"
                         val passwordEntries = fields
                             .filterKeys { it != "deletable" }
                             .map { (platformName, platformData) ->
@@ -155,7 +170,7 @@ fun MainScreen() {
 
             categories.forEach { category ->
                 val categoryId = category.id
-                val categoryName = categoryId // Se quiser usar um campo "name", mude aqui
+                val categoryName = categoryId
                 val isExpanded = expandedMap[categoryId] ?: false
                 val passwords = passwordsMap[categoryId] ?: emptyList()
 
