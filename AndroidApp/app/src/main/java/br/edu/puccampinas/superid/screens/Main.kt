@@ -1,13 +1,21 @@
 package br.edu.puccampinas.superid.screens
 
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,42 +25,86 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import org.checkerframework.checker.units.qual.Current
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(){
+fun MainScreen() {
     val context = LocalContext.current
     var verifiedEmail by remember { mutableStateOf(false) }
+    val uid = Firebase.auth.currentUser?.uid
+    val db = Firebase.firestore
+
+    var categories by remember { mutableStateOf<List<DocumentSnapshot>>(emptyList()) }
+    var passwordsMap by remember { mutableStateOf<Map<String, List<Pair<String, Map<String, Any?>>>>>(emptyMap()) }
+    val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
     val message = "Por favor, verifique seu email para poder recuperar senha"
     val messageColor = Color.Red
 
     checkUserEmailVerification(
         onResult = { isVerified ->
-        if (isVerified) {
-            verifiedEmail = true
-        }
-
-    },
+            if (isVerified) {
+                verifiedEmail = true
+            }
+        },
         onFailure = { e ->
+            //nada a fazer.
+        }
+    )
 
-        })
+    LaunchedEffect(uid) {
+        if (uid != null) {
+            db.collection("users").document(uid).collection("category")
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val cats = snapshot.documents
+                    categories = cats
+
+                    cats.forEach { category ->
+                        expandedMap.putIfAbsent(category.id, false)
+
+                        val fields = category.data ?: emptyMap<String, Any>()
+
+                        // Pegamos só os campos que não sejam "deletable"
+                        val passwordEntries = fields
+                            .filterKeys { it != "deletable" }
+                            .map { (platformName, platformData) ->
+                                platformName to (platformData as Map<String, Any?>)
+                            }
+
+                        // Atualiza o mapa de senhas
+                        passwordsMap = passwordsMap + (category.id to passwordEntries)
+                    }
+                }
+        }else{
+            Toast.makeText(
+                context,
+                "Erro ao carregar informações, reinicie o App",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -82,25 +134,80 @@ fun MainScreen(){
                 contentColor = MaterialTheme.colorScheme.primary,
             ) {
                 Text(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    text = "Icones a serem colocados",
+                    text = "Ícones a serem colocados",
                 )
             }
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (!verifiedEmail) {
                 Text(message, color = messageColor)
             }
+            Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
 
+            categories.forEach { category ->
+                val categoryId = category.id
+                val categoryName = categoryId // Se quiser usar um campo "name", mude aqui
+                val isExpanded = expandedMap[categoryId] ?: false
+                val passwords = passwordsMap[categoryId] ?: emptyList()
+
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandedMap[categoryId] = !isExpanded }
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(categoryName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        }
+
+                        if (isExpanded) {
+                            Divider()
+                            Column(Modifier.padding(12.dp)) {
+                                if (passwords.isEmpty()) {
+                                    Text("Nenhuma senha cadastrada.", fontSize = 14.sp, color = Color.Gray)
+                                } else {
+                                    passwords.forEach { (platformName, platformData) ->
+                                        Text(
+                                            text = "• $platformName",
+                                            fontSize = 14.sp,
+                                            modifier = Modifier
+                                                .padding(vertical = 2.dp)
+                                                .clickable {
+                                                    val email = platformData["email"] as? String ?: ""
+                                                    val password = platformData["password"] as? String ?: ""
+                                                    val description = platformData["description"] as? String ?: ""
+                                                    val accessToken = platformData["accessToken"] as? String ?: ""
+
+                                                    // Ainda falta definir como exibir a senha
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Usuário: $email\nSenha: $password\nDescrição: $description",
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-
     }
 }
 
