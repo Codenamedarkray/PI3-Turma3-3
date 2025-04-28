@@ -11,26 +11,20 @@ import com.google.firebase.ktx.Firebase
  * Verifica se os campos digitados durante o signIn são nulos
  */
 fun areSignInFieldsNull(email: String, password: String): Boolean {
-    if (email.isEmpty() || password.isEmpty()) {
-        Log.i("FIREBASE", "CAMPOS ESTÃO NULOS")
-        return true
-    }
-    return false
+    return email.isEmpty() || password.isEmpty()
 }
 
 /**
- * Valida se os Campos de SignUp foram preenchidos corretamente,
- * chamando as funções que fazem cada validação individual
+ * Valida se os campos de SignIn foram preenchidos corretamente
  */
 fun validateSignInFields(email: String, password: String): Boolean {
-    if (areSignInFieldsNull(email, password) || validationUtils.emailIsInvalid(email) || validationUtils.passwordIsInvalid(password)) {
-        return false
-    }
-    return true
+    return !(areSignInFieldsNull(email, password)
+            || validationUtils.emailIsInvalid(email)
+            || validationUtils.passwordIsInvalid(password))
 }
 
 /**
- * Realiza o SignIn, por uma chamada no firebase Auth
+ * Realiza o SignIn no Firebase Auth
  */
 fun performSignIn(
     context: Context,
@@ -39,16 +33,15 @@ fun performSignIn(
     onSuccess: () -> Unit,
     onFailure: (Exception) -> Unit
 ) {
-
     if (!validateSignInFields(email, password)) {
-        onFailure(Exception("Campos inválidos"))
+        onFailure(Exception("Preencha todos os campos corretamente."))
         return
     }
 
     val auth = Firebase.auth
 
     val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-    Log.i("IMEI", androidId)
+    Log.i("IMEI", "ANDROID ID: $androidId")
 
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
@@ -58,7 +51,7 @@ fun performSignIn(
                 onSuccess()
             } else {
                 Log.e("LOGIN", "Erro ao fazer login", task.exception)
-                onFailure(task.exception ?: Exception("Erro desconhecido no login"))
+                onFailure(task.exception ?: Exception("Erro desconhecido ao fazer login."))
             }
         }
         .addOnFailureListener { e ->
@@ -66,4 +59,3 @@ fun performSignIn(
             onFailure(e)
         }
 }
-
