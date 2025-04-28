@@ -3,6 +3,7 @@ package br.edu.puccampinas.superid.screens
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,17 +12,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
@@ -40,33 +49,51 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewCategory
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewPassword
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.fetchPasswordData
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
+    val uid = Firebase.auth.currentUser?.uid ?: return
+
     var verifiedEmail by remember { mutableStateOf(false) }
-    val uid = Firebase.auth.currentUser?.uid
-    val db = Firebase.firestore
+    val message = "Email não verificado, não será capaz de recuperar senha"
+    val messageColor = Color.Red
 
     //guarda lista com nomes das categorias
     var categories by remember { mutableStateOf<List<DocumentSnapshot>>(emptyList()) }
 
     //guarda um Mapa ligando o nome da categoria com um par de valores(nome da plataforma, Mapa
     // ligando atributo da plataforma com valor do atributo)
-
     var passwordsMap by remember { mutableStateOf<Map<String, List<Pair<String, Map<String, Any?>>>>>(emptyMap()) }
+
     // Guada o nome das categorias ligadas a se elas estão expandidas mostrando as senhas
     val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
-    val message = "Por favor, verifique seu email para poder recuperar senha"
-    val messageColor = Color.Red
+    //variáveis para ver o menu de adição de categoria
+    var showCreateCategoryDialog by remember { mutableStateOf(false) }
+    var newCategoryName by remember { mutableStateOf("") }
+    var isCategoryNameValid by remember { mutableStateOf(false) }
+
+    //variaveis para menu de criação de senha
+    var showCreatePasswordDialog by remember { mutableStateOf(false) }
+    var newPasswordTitle by remember { mutableStateOf("") }
+    var newPasswordEmail by remember { mutableStateOf("") }
+    var newPasswordPassword by remember { mutableStateOf("") }
+    var newPasswordDescription by remember { mutableStateOf("") }
+    var selectedCategoryForPassword by remember { mutableStateOf<String?>(null) }
 
     checkUserEmailVerification(
         onResult = { isVerified ->
@@ -79,39 +106,34 @@ fun MainScreen() {
         }
     )
 
+    fun clearNewPasswordFields() {
+        newPasswordTitle = ""
+        newPasswordEmail = ""
+        newPasswordPassword = ""
+        newPasswordDescription = ""
+        selectedCategoryForPassword = null
+    }
+
     /**
      * rotina que pega as informações para atualizar a composição da tela
      * adiciona as categorias a lista de categorias e as senhas ao mapa de senhas
      */
     LaunchedEffect(uid) {
         if (uid != null) {
-            //fetch nas categorias do usuário
-            db.collection("users").document(uid).collection("category")
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    //obtém os documentos do fetch e salva na lista de categorias
-                    val cats = snapshot.documents
-                    categories = cats
-
-                    //Para cada documento de categoria, faz o mapa para as senhas
-                    cats.forEach { category ->
-                        //coloca por padrão que a categoria está fechada na visualização
-                        expandedMap.putIfAbsent(category.id, false)
-
-                        //Pega os dados da categoria ou coloca como vazia a lista
-                        val fields = category.data ?: emptyMap<String, Any>()
-
-                        // Pega só os campos que não sejam "deletable"
-                        val passwordEntries = fields
-                            .filterKeys { it != "deletable" }
-                            .map { (platformName, platformData) ->
-                                platformName to (platformData as Map<String, Any?>)
-                            }
-
-                        // Atualiza o mapa de senhas
-                        passwordsMap = passwordsMap + (category.id to passwordEntries)
+            fetchPasswordData(
+                uid = uid,
+                onCategoriesFetched = { fetchedCategories ->
+                    categories = fetchedCategories
+                },
+                onPasswordsFetched = { fetchedPasswords ->
+                    passwordsMap = fetchedPasswords
+                },
+                onExpandedMapUpdated = { expanded ->
+                    expanded.forEach { (key, value) ->
+                        expandedMap.putIfAbsent(key, value)
                     }
                 }
+            )
         }else{
             Toast.makeText(
                 context,
@@ -122,49 +144,24 @@ fun MainScreen() {
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                actions = {
-                    IconButton(onClick = {
-                        performLogout(context)
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Logout"
-                        )
-                    }
-                },
-                title = {
-                    Text("SuperID")
-                }
+        topBar = { TopAppBarWithLogout { performLogout(context) } },
+        bottomBar = { BottomAppBarContent() },
+        floatingActionButton = {
+            FabMenu(
+                onNewPasswordClick = { showCreatePasswordDialog = true },
+                onNewCategoryClick = { showCreateCategoryDialog = true }
             )
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.primary,
-            ) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = "Ícones a serem colocados",
-                )
-            }
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(16.dp)
         ) {
             if (!verifiedEmail) {
                 Text(message, color = messageColor)
             }
+
             Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -174,53 +171,373 @@ fun MainScreen() {
                 val isExpanded = expandedMap[categoryId] ?: false
                 val passwords = passwordsMap[categoryId] ?: emptyList()
 
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { expandedMap[categoryId] = !isExpanded }
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(categoryName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                        }
+                CategoryCard(
+                    categoryId = categoryId,
+                    categoryName = categoryName,
+                    isExpanded = isExpanded,
+                    passwords = passwords,
+                    onExpandToggle = {
+                        expandedMap[categoryId] = !isExpanded
+                    },
+                    onPasswordClick = { platformName, platformData ->
+                        val email = platformData["email"] as? String ?: ""
+                        val password = platformData["password"] as? String ?: ""
+                        val description = platformData["description"] as? String ?: ""
 
-                        if (isExpanded) {
-                            Divider()
-                            Column(Modifier.padding(12.dp)) {
-                                if (passwords.isEmpty()) {
-                                    Text("Nenhuma senha cadastrada.", fontSize = 14.sp, color = Color.Gray)
-                                } else {
-                                    passwords.forEach { (platformName, platformData) ->
-                                        Text(
-                                            text = "• $platformName",
-                                            fontSize = 14.sp,
-                                            modifier = Modifier
-                                                .padding(vertical = 2.dp)
-                                                .clickable {
-                                                    val email = platformData["email"] as? String ?: ""
-                                                    val password = platformData["password"] as? String ?: ""
-                                                    val description = platformData["description"] as? String ?: ""
-                                                    val accessToken = platformData["accessToken"] as? String ?: ""
+                        Toast.makeText(
+                            context,
+                            "Usuário: $email\nSenha: $password\nDescrição: $description",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            }
+        }
+    }
 
-                                                    // Ainda falta definir como exibir a senha
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Usuário: $email\nSenha: $password\nDescrição: $description",
-                                                        Toast.LENGTH_LONG
-                                                    ).show()
-                                                }
-                                        )
-                                    }
+    if (showCreateCategoryDialog) {
+        NewCategoryDialog(
+            newCategoryName = newCategoryName,
+            isCategoryNameValid = isCategoryNameValid,
+            onNameChange = { text ->
+                newCategoryName = text
+                isCategoryNameValid = categories.none { it.id.equals(newCategoryName, ignoreCase = true) }
+            },
+            onDismiss = {
+                showCreateCategoryDialog = false
+                newCategoryName = ""
+            },
+            onSave = {
+                createNewCategory(
+                    uid = uid,
+                    categoryName = newCategoryName.trim(),
+                    onSuccess = {
+                        showCreateCategoryDialog = false
+                        newCategoryName = ""
+                        fetchPasswordData(
+                            uid = uid,
+                            onCategoriesFetched = { categories = it },
+                            onPasswordsFetched = { passwordsMap = it },
+                            onExpandedMapUpdated = { expanded ->
+                                expanded.forEach { (key, value) ->
+                                    expandedMap.putIfAbsent(key, value)
                                 }
                             }
+                        )
+                    },
+                    onFailure = {
+                        // TODO: Tratar erro
+                    }
+                )
+            }
+        )
+    }
+    if (showCreatePasswordDialog) {
+        NewPasswordDialog(
+            categories = categories,
+            selectedCategory = selectedCategoryForPassword,
+            onCategorySelected = { selectedCategoryForPassword = it },
+            title = newPasswordTitle,
+            email = newPasswordEmail,
+            password = newPasswordPassword,
+            description = newPasswordDescription,
+            onTitleChange = { newPasswordTitle = it },
+            onEmailChange = { newPasswordEmail = it },
+            onPasswordChange = { newPasswordPassword = it },
+            onDescriptionChange = { newPasswordDescription = it },
+            onDismiss = {
+                showCreatePasswordDialog = false
+                clearNewPasswordFields()
+            },
+            onSave = {
+                if (selectedCategoryForPassword != null) {
+                    createNewPassword(
+                        uid = uid,
+                        categoryName = selectedCategoryForPassword!!,
+                        title = newPasswordTitle,
+                        email = newPasswordEmail,
+                        password = newPasswordPassword,
+                        description = newPasswordDescription,
+                        onSuccess = {
+                            showCreatePasswordDialog = false
+                            clearNewPasswordFields()
+                            fetchPasswordData(
+                                uid = uid,
+                                onCategoriesFetched = { categories = it },
+                                onPasswordsFetched = { passwordsMap = it },
+                                onExpandedMapUpdated = { expanded ->
+                                    expanded.forEach { (key, value) ->
+                                        expandedMap.putIfAbsent(key, value)
+                                    }
+                                }
+                            )
+                        },
+                        onFailure = {
+                            // TODO: Tratar erro
+                        }
+                    )
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBarWithLogout(onLogout: () -> Unit) {
+    TopAppBar(
+        colors = topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.primary,
+        ),
+        actions = {
+            IconButton(onClick = onLogout) {
+                Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
+            }
+        },
+        title = { Text("SuperID") }
+    )
+}
+
+@Composable
+fun BottomAppBarContent() {
+    BottomAppBar(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.primary,
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            text = "Ícones a serem colocados",
+        )
+    }
+}
+
+@Composable
+fun FabMenu(onNewPasswordClick: () -> Unit, onNewCategoryClick: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        FloatingActionButton(
+            onClick = { expanded = !expanded },
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Novo")
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Nova Senha") },
+                onClick = {
+                    expanded = false
+                    onNewPasswordClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Nova Categoria") },
+                onClick = {
+                    expanded = false
+                    onNewCategoryClick()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun NewCategoryDialog(
+    newCategoryName: String,
+    isCategoryNameValid: Boolean,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Nova Categoria") },
+        text = {
+            Column {
+                TextField(
+                    value = newCategoryName,
+                    onValueChange = onNameChange,
+                    label = { Text("Nome da categoria") },
+                    singleLine = true,
+                    isError = !isCategoryNameValid && newCategoryName.isNotBlank()
+                )
+                if (!isCategoryNameValid && newCategoryName.isNotBlank()) {
+                    Text(
+                        text = "Nome inválido ou já existente",
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSave,
+                enabled = isCategoryNameValid
+            ) {
+                Text("Salvar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun CategoryCard(
+    categoryId: String,
+    categoryName: String,
+    isExpanded: Boolean,
+    passwords: List<Pair<String, Map<String, Any?>>>,
+    onExpandToggle: () -> Unit,
+    onPasswordClick: (platformName: String, platformData: Map<String, Any?>) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onExpandToggle() }
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(categoryName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            }
+            if (isExpanded) {
+                Divider()
+                Column(Modifier.padding(12.dp)) {
+                    if (passwords.isEmpty()) {
+                        Text("Nenhuma senha cadastrada.", fontSize = 14.sp, color = Color.Gray)
+                    } else {
+                        passwords.forEach { (platformName, platformData) ->
+                            Text(
+                                text = "• $platformName",
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .padding(vertical = 2.dp)
+                                    .clickable {
+                                        onPasswordClick(platformName, platformData)
+                                    }
+                            )
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun NewPasswordDialog(
+    categories: List<DocumentSnapshot>,
+    selectedCategory: String?,
+    onCategorySelected: (String) -> Unit,
+    title: String,
+    email: String,
+    password: String,
+    description: String,
+    onTitleChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Nova Senha") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (categories.isNotEmpty()) {
+                    DropdownMenuCategories(
+                        categories = categories,
+                        selectedCategory = selectedCategory,
+                        onCategorySelected = onCategorySelected
+                    )
+                }
+                TextField(
+                    value = title,
+                    onValueChange = onTitleChange,
+                    label = { Text("Título da Plataforma*") },
+                    singleLine = true,
+                    isError = title == "deletable"
+
+                )
+                TextField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = { Text("Email/Login (Opcional)") },
+                    singleLine = true
+                )
+                TextField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    label = { Text("Senha*") },
+                    singleLine = true
+                )
+                TextField(
+                    value = description,
+                    onValueChange = onDescriptionChange,
+                    label = { Text("Descrição (Opcional)") }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSave,
+                enabled = !title.isBlank() && selectedCategory != null && !password.isBlank() && title != "deletable"
+            ) {
+                Text("Salvar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onDismiss() }) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun DropdownMenuCategories(
+    categories: List<DocumentSnapshot>,
+    selectedCategory: String?,
+    onCategorySelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(selectedCategory ?: "Selecione uma categoria")
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            categories.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(category.id) },
+                    onClick = {
+                        onCategorySelected(category.id)
+                        expanded = false
+                    }
+                )
             }
         }
     }
