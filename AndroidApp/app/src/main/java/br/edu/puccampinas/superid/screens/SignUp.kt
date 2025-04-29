@@ -2,6 +2,11 @@ package br.edu.puccampinas.superid.screens
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -47,10 +52,18 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            kotlinx.coroutines.delay(3000L)
+            showSnackbar = false
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -90,7 +103,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Título
             Text(
                 text = "CRIAR CONTA",
                 fontSize = 28.sp,
@@ -101,7 +113,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Campo Nome
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -116,7 +127,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-            // Campo Email
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -132,7 +142,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-            // Campo Senha
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -155,7 +164,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-            // Botão Criar Conta
             Button(
                 onClick = {
                     if (!isLoading) {
@@ -171,12 +179,9 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                                     context.startActivity(intent)
                                     isLoading = false
                                 },
-                                onFailure = { exception ->
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Erro ao criar conta: ${exception.message ?: "Erro desconhecido"}"
-                                        )
-                                    }
+                                onFailure = {
+                                    snackbarMessage = "Erro ao criar conta. Tente novamente."
+                                    showSnackbar = true
                                     isLoading = false
                                 }
                             )
@@ -187,9 +192,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .fillMaxWidth()
                     .height(56.dp),
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 contentPadding = PaddingValues()
             ) {
                 Box(
@@ -219,7 +222,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 }
             }
 
-            // Já possui conta?
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -245,12 +247,30 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        // Snackbar
-        SnackbarHost(
-            hostState = snackbarHostState,
+        // Snackbar bonito
+        AnimatedVisibility(
+            visible = showSnackbar,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
-        )
+                .padding(bottom = 32.dp)
+        ) {
+            Snackbar(
+                containerColor = Color(0xFFDC2626),
+                contentColor = Color.White,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = snackbarMessage,
+                    fontFamily = montserrat,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }

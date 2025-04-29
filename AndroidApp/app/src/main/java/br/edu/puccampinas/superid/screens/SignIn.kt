@@ -2,6 +2,11 @@ package br.edu.puccampinas.superid.screens
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -34,7 +40,6 @@ import br.edu.puccampinas.superid.R
 import br.edu.puccampinas.superid.WelcomeActivity
 import br.edu.puccampinas.superid.functions.performSignIn
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
@@ -47,13 +52,20 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var showSnackbar by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            kotlinx.coroutines.delay(3000L)
+            showSnackbar = false
+        }
     }
 
     Box(
@@ -62,32 +74,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        // Seta de voltar no topo
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 36.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                    val intent = Intent(context, WelcomeActivity::class.java)
-                    context.startActivity(intent)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
-
-        // Conteúdo principal centralizado
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -174,7 +160,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 )
             }
 
-            // Botão Entrar com loading circular
             Button(
                 onClick = {
                     if (!isLoading) {
@@ -190,11 +175,8 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                                     isLoading = false
                                 },
                                 onFailure = { exception ->
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Erro ao acessar: ${exception.message ?: "Erro desconhecido"}"
-                                        )
-                                    }
+                                    Log.e("LOGIN", "ERRO: ${exception.message}")
+                                    showSnackbar = true
                                     isLoading = false
                                 }
                             )
@@ -262,11 +244,30 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
+        // Snackbar no fundo
+        AnimatedVisibility(
+            visible = showSnackbar,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
-        )
+                .padding(bottom = 32.dp)
+        ) {
+            Snackbar(
+                containerColor = Color(0xFFDC2626),
+                contentColor = Color.White,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "CREDENCIAIS INVÁLIDAS",
+                    fontFamily = montserrat,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }

@@ -1,8 +1,12 @@
 package br.edu.puccampinas.superid.screens
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -37,10 +41,18 @@ fun RecoverPasswordForm(navController: NavController) {
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     var email by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
+
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            kotlinx.coroutines.delay(3000L)
+            showSnackbar = false
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -88,7 +100,6 @@ fun RecoverPasswordForm(navController: NavController) {
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Campo E-mail
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it.replace(" ", "") },
@@ -104,7 +115,6 @@ fun RecoverPasswordForm(navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-            // Botão Enviar link
             Button(
                 onClick = {
                     if (!isLoading) {
@@ -114,21 +124,19 @@ fun RecoverPasswordForm(navController: NavController) {
                                 recoverPassword(
                                     email = email,
                                     onSuccess = {
-                                        coroutineScope.launch {
-                                            snackbarHostState.showSnackbar("Link enviado para o e-mail.")
-                                        }
+                                        snackbarMessage = "Link enviado para o e-mail."
+                                        showSnackbar = true
                                         isLoading = false
                                     },
                                     onFailure = {
-                                        coroutineScope.launch {
-                                            snackbarHostState.showSnackbar("Erro: ${it.message ?: "Erro desconhecido"}")
-                                        }
+                                        snackbarMessage = "Erro: ${it.message ?: "Erro desconhecido"}"
+                                        showSnackbar = true
                                         isLoading = false
                                     }
-
                                 )
                             } else {
-                                snackbarHostState.showSnackbar("E-mail inválido")
+                                snackbarMessage = "E-mail inválido"
+                                showSnackbar = true
                                 isLoading = false
                             }
                         }
@@ -169,11 +177,30 @@ fun RecoverPasswordForm(navController: NavController) {
             }
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
+        // Snackbar Bonito
+        AnimatedVisibility(
+            visible = showSnackbar,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
-        )
+                .padding(bottom = 32.dp)
+        ) {
+            Snackbar(
+                containerColor = Color(0xFFDC2626),
+                contentColor = Color.White,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = snackbarMessage,
+                    fontFamily = montserrat,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }

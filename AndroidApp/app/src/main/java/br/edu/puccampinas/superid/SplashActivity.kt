@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
 class SplashActivity : ComponentActivity() {
@@ -33,15 +34,15 @@ class SplashActivity : ComponentActivity() {
                     onFinish = {
                         val sharedPreferences = getSharedPreferences("superid_prefs", MODE_PRIVATE)
                         val hasSeenWelcome = sharedPreferences.getBoolean("has_seen_welcome", false)
+                        val user = FirebaseAuth.getInstance().currentUser
 
-                        val nextActivity = if (!hasSeenWelcome) {
-                            WelcomeActivity::class.java
-                        } else {
-                            AuthenticationActivity::class.java
+                        val nextActivity = when {
+                            !hasSeenWelcome -> WelcomeActivity::class.java
+                            user != null -> ReAuthenticationActivity::class.java
+                            else -> AuthenticationActivity::class.java
                         }
 
-                        val intent = Intent(this@SplashActivity, nextActivity)
-                        startActivity(intent)
+                        startActivity(Intent(this@SplashActivity, nextActivity))
                         finish()
                     }
                 )
