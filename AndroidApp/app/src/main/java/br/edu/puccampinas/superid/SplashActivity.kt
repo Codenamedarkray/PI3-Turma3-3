@@ -1,0 +1,105 @@
+package br.edu.puccampinas.superid
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
+import kotlinx.coroutines.delay
+
+class SplashActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            SuperIDTheme {
+                SplashScreen(
+                    onFinish = {
+                        val sharedPreferences = getSharedPreferences("superid_prefs", MODE_PRIVATE)
+                        val hasSeenWelcome = sharedPreferences.getBoolean("has_seen_welcome", false)
+
+                        val nextActivity = if (!hasSeenWelcome) {
+                            WelcomeActivity::class.java
+                        } else {
+                            AuthenticationActivity::class.java
+                        }
+
+                        val intent = Intent(this@SplashActivity, nextActivity)
+                        startActivity(intent)
+                        finish()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SplashScreen(onFinish: () -> Unit) {
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
+    val scale = remember { Animatable(0.8f) }
+
+    LaunchedEffect(Unit) {
+        scale.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 1500,
+                easing = FastOutSlowInEasing
+            )
+        )
+        delay(1000L)
+        onFinish()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0D1117)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_shield_lock),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(96.dp)
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value
+                    )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "SuperID",
+                fontFamily = montserrat,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                color = Color.White
+            )
+        }
+    }
+}
