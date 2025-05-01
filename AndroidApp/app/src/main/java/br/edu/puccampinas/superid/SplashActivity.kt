@@ -24,28 +24,32 @@ import androidx.compose.ui.unit.sp
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+import br.edu.puccampinas.superid.screens.WelcomeFlow
 
 class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             SuperIDTheme {
-                SplashScreen(
-                    onFinish = {
-                        val sharedPreferences = getSharedPreferences("superid_prefs", MODE_PRIVATE)
-                        val hasSeenWelcome = sharedPreferences.getBoolean("has_seen_welcome", false)
-                        val user = FirebaseAuth.getInstance().currentUser
+                val sharedPreferences = getSharedPreferences("superid_prefs", MODE_PRIVATE)
+                var hasSeenWelcome by remember { mutableStateOf(sharedPreferences.getBoolean("has_seen_welcome", false)) }
 
-                        val nextActivity = when {
-                            !hasSeenWelcome -> WelcomeActivity::class.java
-                            user != null -> ReAuthenticationActivity::class.java
-                            else -> AuthenticationActivity::class.java
+                if (hasSeenWelcome) {
+                    // Já viu o carrossel e termos? Vai direto pro Login
+                    startActivity(Intent(this@SplashActivity, AuthenticationActivity::class.java))
+                    finish()
+                } else {
+                    // Primeira vez: mostra carrossel + termos
+                    WelcomeFlow(
+                        onFinish = {
+                            // Quando terminar carrossel + aceitar termos
+                            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
+                            startActivity(Intent(this@SplashActivity, AuthenticationActivity::class.java))
+                            finish()
                         }
-
-                        startActivity(Intent(this@SplashActivity, nextActivity))
-                        finish()
-                    }
-                )
+                    )
+                }
             }
         }
     }

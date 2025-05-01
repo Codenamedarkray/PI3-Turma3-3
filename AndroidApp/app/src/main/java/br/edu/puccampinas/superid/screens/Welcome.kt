@@ -1,5 +1,6 @@
 package br.edu.puccampinas.superid.screens
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -28,6 +29,8 @@ import br.edu.puccampinas.superid.AuthenticationActivity
 import br.edu.puccampinas.superid.R
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
+import br.edu.puccampinas.superid.screens.WelcomeFlow
+// Data class
 
 data class PageInfo(
     val title: String,
@@ -35,7 +38,24 @@ data class PageInfo(
     val imageRes: Int
 )
 
-@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun WelcomeFlow(onFinish: () -> Unit) {
+    var showTermsScreen by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (!showTermsScreen) {
+        WelcomeCarouselScreen(onFinishWelcome = {
+            showTermsScreen = true
+        })
+    } else {
+        TermsScreen(onAccepted = {
+            val sharedPreferences = context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
+            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
+            onFinish()
+        })
+    }
+}
+
 @Composable
 fun WelcomeCarouselScreen(onFinishWelcome: () -> Unit) {
     val montserrat = FontFamily(
@@ -46,31 +66,11 @@ fun WelcomeCarouselScreen(onFinishWelcome: () -> Unit) {
     val appName = LocalContext.current.getString(R.string.app_name)
 
     val pages = listOf(
-        PageInfo(
-            title = "Bem-vindo ao $appName",
-            description = "Seu cofre digital de senhas com segurança e praticidade.",
-            imageRes = R.drawable.ic_shield_lock
-        ),
-        PageInfo(
-            title = "Armazene Suas Senhas",
-            description = "Organize todas as suas senhas em categorias personalizadas.",
-            imageRes = R.drawable.ic_shield_lock
-        ),
-        PageInfo(
-            title = "Login por QR Code",
-            description = "Faça login em sites usando QR Code, de forma rápida e segura.",
-            imageRes = R.drawable.ic_shield_lock
-        ),
-        PageInfo(
-            title = "Segurança Avançada",
-            description = "Criptografia forte protege suas senhas a todo momento.",
-            imageRes = R.drawable.ic_shield_lock
-        ),
-        PageInfo(
-            title = "Comece Agora",
-            description = "Simplifique sua vida com o SuperID. Vamos começar!",
-            imageRes = R.drawable.ic_shield_lock
-        )
+        PageInfo("Bem-vindo ao $appName", "Seu cofre digital de senhas com segurança e praticidade.", R.drawable.ic_shield_lock),
+        PageInfo("Armazene Suas Senhas", "Organize todas as suas senhas em categorias personalizadas.", R.drawable.ic_shield_lock),
+        PageInfo("Login por QR Code", "Faça login em sites usando QR Code, de forma rápida e segura.", R.drawable.ic_shield_lock),
+        PageInfo("Segurança Avançada", "Criptografia forte protege suas senhas a todo momento.", R.drawable.ic_shield_lock),
+        PageInfo("Comece Agora", "Simplifique sua vida com o SuperID. Vamos começar!", R.drawable.ic_shield_lock)
     )
 
     val pagerState = rememberPagerState(initialPage = 0)
@@ -189,12 +189,10 @@ fun PageIndicator(currentPage: Int, pageCount: Int) {
                 targetValue = if (index == currentPage) 16.dp else 8.dp,
                 label = "IndicatorWidth"
             )
-
             val animatedColor by animateColorAsState(
                 targetValue = if (index == currentPage) Color(0xFF00BCD4) else Color(0xFF9CA3AF),
                 label = "IndicatorColor"
             )
-
             Box(
                 modifier = Modifier
                     .padding(horizontal = 6.dp)
@@ -208,6 +206,104 @@ fun PageIndicator(currentPage: Int, pageCount: Int) {
         }
     }
 }
+
+@Composable
+fun TermsScreen(onAccepted: () -> Unit) {
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
+    var accepted by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0D1117))
+            .padding(horizontal = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 36.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Termos de Uso",
+                    fontSize = 28.sp,
+                    fontFamily = montserrat,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
+                    text = "Aqui você poderá visualizar os termos de uso do SuperID.\n\n(Lembre-se de adaptar esse texto depois!)",
+                    fontSize = 16.sp,
+                    fontFamily = montserrat,
+                    color = Color(0xFF9CA3AF),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                ) {
+                    Checkbox(
+                        checked = accepted,
+                        onCheckedChange = { accepted = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF00BCD4))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Li e aceito os termos de uso",
+                        fontFamily = montserrat,
+                        color = Color.White
+                    )
+                }
+
+                Button(
+                    onClick = onAccepted,
+                    enabled = accepted,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    if (accepted) listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                                    else listOf(Color.Gray, Color.DarkGray)
+                                ),
+                                shape = RoundedCornerShape(50)
+                            )
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Continuar",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontFamily = montserrat
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
 
 @Composable
 fun GradientButton(
@@ -227,10 +323,8 @@ fun GradientButton(
             modifier = Modifier
                 .background(
                     brush = Brush.horizontalGradient(
-                        if (enabled)
-                            listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
-                        else
-                            listOf(Color.Gray, Color.DarkGray)
+                        if (enabled) listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                        else listOf(Color.Gray, Color.DarkGray)
                     ),
                     shape = RoundedCornerShape(50)
                 )

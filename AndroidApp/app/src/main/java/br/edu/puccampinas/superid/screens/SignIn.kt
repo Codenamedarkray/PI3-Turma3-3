@@ -10,10 +10,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -43,6 +46,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
+    /** FONTES **/
     val montserrat = FontFamily(
         Font(R.font.montserrat_regular, FontWeight.Normal),
         Font(R.font.montserrat_bold, FontWeight.Bold)
@@ -56,28 +60,30 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
+    /** Validação básica de e-mail */
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
-
+    /** Efeito para esconder o Snackbar automaticamente após 3 segundos */
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             kotlinx.coroutines.delay(3000L)
             showSnackbar = false
         }
     }
-
+    /** Layout principal da tela de login */
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
+        /** Coluna com os campos e botões do formulário */
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(top = 100.dp, bottom = 48.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -88,8 +94,10 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 32.dp)
             )
+
+            /** CAMPO DE EMAIL**/
 
             OutlinedTextField(
                 value = email,
@@ -98,11 +106,11 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 textStyle = TextStyle(color = Color.White),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 trailingIcon = {
-                    if (isEmailValid) {
+                    if (email.isNotBlank()) {
                         Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Email válido",
-                            tint = Color(0xFF00FF00)
+                            imageVector = if (isEmailValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isEmailValid) Color(0xFF00FF00) else Color.Red
                         )
                     }
                 },
@@ -114,6 +122,8 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
             )
+
+            /** CAMPO DE SENHA**/
 
             OutlinedTextField(
                 value = password,
@@ -137,6 +147,8 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
+            /** Link para recuperar senha */
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -144,21 +156,18 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .clickable { navController.navigate("recover") }
                     .padding(bottom = 32.dp)
             ) {
-                Text(
-                    text = "Esqueceu a senha?",
-                    fontSize = 16.sp,
-                    fontFamily = montserrat,
-                    color = Color(0xFF9CA3AF)
-                )
+                Text("Esqueceu a senha?", fontSize = 16.sp, fontFamily = montserrat, color = Color(0xFF9CA3AF))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Clique aqui!",
                     fontSize = 16.sp,
                     fontFamily = montserrat,
-                    color = Color(0xFF00BCD4),
+                    color = Color(0xFF007BFF),
                     style = TextStyle(textDecoration = TextDecoration.Underline)
                 )
             }
+
+            /** Botão de login com carregamento */
 
             Button(
                 onClick = {
@@ -174,8 +183,8 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                                     context.startActivity(intent)
                                     isLoading = false
                                 },
-                                onFailure = { exception ->
-                                    Log.e("LOGIN", "ERRO: ${exception.message}")
+                                onFailure = {
+                                    Log.e("LOGIN", "ERRO: ${it.message}")
                                     showSnackbar = true
                                     isLoading = false
                                 }
@@ -187,9 +196,7 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .fillMaxWidth()
                     .height(56.dp),
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 contentPadding = PaddingValues()
             ) {
                 Box(
@@ -210,14 +217,12 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text(
-                            text = "Entrar",
-                            color = Color.White,
-                            fontSize = 16.sp
-                        )
+                        Text("Entrar", color = Color.White, fontSize = 16.sp)
                     }
                 }
             }
+
+            /** Link para cadastro */
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -226,40 +231,32 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .fillMaxWidth()
                     .padding(top = 24.dp)
             ) {
-                Text(
-                    text = "Ainda não possui conta?",
-                    fontSize = 16.sp,
-                    fontFamily = montserrat,
-                    color = Color(0xFF9CA3AF)
-                )
+                Text("Ainda não possui conta?", fontSize = 16.sp, fontFamily = montserrat, color = Color(0xFF9CA3AF))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Cadastre-se",
                     fontSize = 16.sp,
                     fontFamily = montserrat,
-                    color = Color(0xFF00BCD4),
+                    color = Color(0xFF007BFF),
                     style = TextStyle(textDecoration = TextDecoration.Underline),
                     modifier = Modifier.clickable { navController.navigate("signup") }
                 )
             }
         }
 
-        // Snackbar no fundo
+        /** Snackbar animado para erro de login */
+
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
         ) {
             Snackbar(
                 containerColor = Color(0xFFDC2626),
                 contentColor = Color.White,
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .fillMaxWidth()
+                modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth()
             ) {
                 Text(
                     text = "CREDENCIAIS INVÁLIDAS",
