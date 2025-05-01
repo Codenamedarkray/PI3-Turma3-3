@@ -51,7 +51,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewCategory
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewPassword
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.deletePassword
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.fetchPasswordData
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.generateRandomBase64Token
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.updatePassword
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import com.google.firebase.auth.ktx.auth
@@ -94,6 +97,12 @@ fun MainScreen() {
     var newPasswordPassword by remember { mutableStateOf("") }
     var newPasswordDescription by remember { mutableStateOf("") }
     var selectedCategoryForPassword by remember { mutableStateOf<String?>(null) }
+
+    //dados de visualização da senha
+    var viewPasswordDialog by remember { mutableStateOf(false) }
+    var selectedPlatformName by remember { mutableStateOf("") }
+    var selectedPlatformData by remember { mutableStateOf<Map<String, Any?>>(emptyMap()) }
+    var selectedCategoryId by remember { mutableStateOf<String>("") }
 
     checkUserEmailVerification(
         onResult = { isVerified ->
@@ -180,15 +189,12 @@ fun MainScreen() {
                         expandedMap[categoryId] = !isExpanded
                     },
                     onPasswordClick = { platformName, platformData ->
-                        val email = platformData["email"] as? String ?: ""
-                        val password = platformData["password"] as? String ?: ""
-                        val description = platformData["description"] as? String ?: ""
+                        selectedPlatformName = platformName
+                        selectedPlatformData = platformData
+                        selectedCategoryId = categoryId
 
-                        Toast.makeText(
-                            context,
-                            "Usuário: $email\nSenha: $password\nDescrição: $description",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        viewPasswordDialog = true
+
                     }
                 )
             }
@@ -277,6 +283,65 @@ fun MainScreen() {
                         }
                     )
                 }
+            }
+        )
+    }
+
+    if(viewPasswordDialog){
+        ViewPasswordDialog(
+            categoryId = selectedCategoryId,
+            platformName = selectedPlatformName,
+            initialData = selectedPlatformData,
+            onDismiss = {
+                viewPasswordDialog = false
+                selectedPlatformName = ""
+                selectedPlatformData = emptyMap()
+                selectedCategoryId = ""
+            },
+            onSave = { updatedData ->
+                updatePassword(
+                    uid = uid,
+                    category = selectedCategoryId,
+                    title = selectedPlatformName,
+                    updatedData = updatedData,
+                    onSuccess = {
+                        fetchPasswordData(
+                            uid = uid,
+                            onCategoriesFetched = { categories = it },
+                            onPasswordsFetched = { passwordsMap = it },
+                            onExpandedMapUpdated = { expanded ->
+                                expanded.forEach { (key, value) ->
+                                    expandedMap.putIfAbsent(key, value)
+                                }
+                            }
+                        )
+                    },
+                    onFailure = {
+                        Toast.makeText(context, "Erro ao salvar alterações", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onDelete = {
+                deletePassword(
+                    uid = uid,
+                    category = selectedCategoryId,
+                    title = selectedPlatformName,
+                    onSuccess = {
+                        fetchPasswordData(
+                            uid = uid,
+                            onCategoriesFetched = { categories = it },
+                            onPasswordsFetched = { passwordsMap = it },
+                            onExpandedMapUpdated = { expanded ->
+                                expanded.forEach { (key, value) ->
+                                    expandedMap.putIfAbsent(key, value)
+                                }
+                            }
+                        )
+                    },
+                    onFailure = {
+                        Toast.makeText(context, "Erro ao deletar senha", Toast.LENGTH_SHORT).show()
+                    }
+                )
             }
         )
     }
@@ -540,6 +605,135 @@ fun DropdownMenuCategories(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun ViewPasswordDialog(
+    categoryId: String,
+    platformName: String,
+    initialData: Map<String, Any?>,
+    onDismiss: () -> Unit,
+    onSave: (updatedData: Map<String, Any?>) -> Unit,
+    onDelete: () -> Unit
+) {
+    val newAcessToken = generateRandomBase64Token()
+
+
+    var isEditing by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    var email by remember { mutableStateOf(initialData["email"] as? String ?: "") }
+    var password by remember { mutableStateOf(initialData["password"] as? String ?: "") }
+    var description by remember { mutableStateOf(initialData["description"] as? String ?: "") }
+
+    onSave(
+        mapOf(
+            "email" to email,
+            "password" to password,
+            "description" to description,
+            "accessToken" to newAcessToken
+        )
+    )
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Detalhes da Senha") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextField(
+                    value = platformName,
+                    onValueChange = {},
+                    label = { Text("Plataforma") },
+                    enabled = false
+                )
+                TextField(
+                    value = email,
+                    onValueChange = { if (isEditing) email = it },
+                    label = { Text("Email/Login") },
+                    enabled = isEditing
+                )
+                TextField(
+                    value = password,
+                    onValueChange = { if (isEditing) password = it },
+                    label = { Text("Senha") },
+                    isError = password.isBlank(),
+                    enabled = isEditing
+                )
+                TextField(
+                    value = description,
+                    onValueChange = { if (isEditing) description = it },
+                    label = { Text("Descrição") },
+                    enabled = isEditing
+                )
+            }
+        },
+        confirmButton = {
+            if (isEditing) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(onClick = {
+                        // Cancelar edição
+                        email = initialData["email"] as? String ?: ""
+                        password = initialData["password"] as? String ?: ""
+                        description = initialData["description"] as? String ?: ""
+                        isEditing = false
+                    }) {
+                        Text("Cancelar")
+                    }
+                    TextButton(onClick = {
+                        onSave(
+                            mapOf(
+                                "email" to email,
+                                "password" to password,
+                                "description" to description,
+                                "accessToken" to newAcessToken
+                            )
+                        )
+                        isEditing = false
+                    },
+                        enabled = password.isNotBlank()
+                    ) {
+                        Text("Salvar")
+                    }
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(onClick = { showDeleteConfirmation = true }) {
+                        Text("Deletar", color = Color.Red)
+                    }
+                    TextButton(onClick = { isEditing = true }) {
+                        Text("Editar")
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onDismiss() }) {
+                Text("Fechar")
+            }
+        }
+    )
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Confirmar Exclusão") },
+            text = { Text("Tem certeza que deseja excluir esta senha?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    onDelete()
+                    onDismiss()
+                }) {
+                    Text("Confirmar", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

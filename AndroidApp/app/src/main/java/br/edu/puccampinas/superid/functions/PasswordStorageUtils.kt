@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Base64
 import androidx.compose.runtime.MutableState
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -106,4 +107,36 @@ object PasswordStorageUtils {
         SecureRandom().nextBytes(bytes)
         return Base64.encodeToString(bytes, Base64.NO_WRAP)
     }
+
+    fun updatePassword(
+        uid: String,
+        category: String,
+        title: String,
+        updatedData: Map<String, Any?>,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val db = Firebase.firestore
+        db.collection("users").document(uid)
+            .collection("category").document(category)
+            .update(mapOf(title to updatedData))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun deletePassword(
+        uid: String,
+        category: String,
+        title: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val db = Firebase.firestore
+        db.collection("users").document(uid)
+            .collection("category").document(category)
+            .update(mapOf(title to FieldValue.delete()))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
 }
