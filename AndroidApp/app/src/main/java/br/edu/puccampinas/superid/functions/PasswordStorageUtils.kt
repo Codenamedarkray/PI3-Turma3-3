@@ -116,7 +116,6 @@ object PasswordStorageUtils {
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        val db = Firebase.firestore
         db.collection("users").document(uid)
             .collection("category").document(category)
             .update(mapOf(title to updatedData))
@@ -131,10 +130,24 @@ object PasswordStorageUtils {
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        val db = Firebase.firestore
         db.collection("users").document(uid)
             .collection("category").document(category)
             .update(mapOf(title to FieldValue.delete()))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun deleteCategory(
+        uid: String,
+        categoryId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("users")
+            .document(uid)
+            .collection("category")
+            .document(categoryId)
+            .delete()
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }

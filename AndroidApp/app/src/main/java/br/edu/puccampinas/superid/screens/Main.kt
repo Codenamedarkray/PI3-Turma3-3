@@ -1,5 +1,6 @@
 package br.edu.puccampinas.superid.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -41,6 +45,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewCategory
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewPassword
+import br.edu.puccampinas.superid.functions.PasswordStorageUtils.deleteCategory
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.deletePassword
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.fetchPasswordData
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.generateRandomBase64Token
@@ -103,6 +109,9 @@ fun MainScreen() {
     var selectedPlatformName by remember { mutableStateOf("") }
     var selectedPlatformData by remember { mutableStateOf<Map<String, Any?>>(emptyMap()) }
     var selectedCategoryId by remember { mutableStateOf<String>("") }
+
+    //modo edição de categorias
+    var isCategoryEditMode by remember { mutableStateOf(false) }
 
     checkUserEmailVerification(
         onResult = { isVerified ->
@@ -174,10 +183,25 @@ fun MainScreen() {
             Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
 
+            Row(
+                modifier = Modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { isCategoryEditMode = !isCategoryEditMode }) {
+                    Icon(
+                        imageVector = if (isCategoryEditMode) Icons.Default.Check else Icons.Default.Edit,
+                        contentDescription = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                    )
+                }
+                var text = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                Text(text)
+            }
+
             categories.forEach { category ->
                 val categoryId = category.id
                 val categoryName = categoryId
                 val isExpanded = expandedMap[categoryId] ?: false
+                val deletable = category.getBoolean("deletable") ?: true
                 val passwords = passwordsMap[categoryId] ?: emptyList()
 
                 CategoryCard(
@@ -185,16 +209,34 @@ fun MainScreen() {
                     categoryName = categoryName,
                     isExpanded = isExpanded,
                     passwords = passwords,
-                    onExpandToggle = {
-                        expandedMap[categoryId] = !isExpanded
-                    },
+                    isEditMode = isCategoryEditMode,
+                    deletable = deletable,
+                    onExpandToggle = { expandedMap[categoryId] = !isExpanded },
                     onPasswordClick = { platformName, platformData ->
                         selectedPlatformName = platformName
                         selectedPlatformData = platformData
                         selectedCategoryId = categoryId
 
                         viewPasswordDialog = true
-
+                    },
+                    onDeleteCategory = { categoryIdToDelete ->
+                        deleteCategory(
+                            uid = uid,
+                            categoryId = categoryIdToDelete,
+                            onSuccess = {
+                                fetchPasswordData(
+                                    uid = uid,
+                                    onCategoriesFetched = { categories = it },
+                                    onPasswordsFetched = { passwordsMap = it },
+                                    onExpandedMapUpdated = { expanded ->
+                                        expanded.forEach { (key, value) ->
+                                            expandedMap.putIfAbsent(key, value)
+                                        }
+                                    }
+                                )
+                            },
+                            onFailure = { /* erro */ }
+                        )
                     }
                 )
             }
@@ -463,23 +505,56 @@ fun CategoryCard(
     categoryName: String,
     isExpanded: Boolean,
     passwords: List<Pair<String, Map<String, Any?>>>,
+    isEditMode: Boolean,
+    deletable: Boolean,
     onExpandToggle: () -> Unit,
-    onPasswordClick: (platformName: String, platformData: Map<String, Any?>) -> Unit
+    onPasswordClick: (platformName: String, platformData: Map<String, Any?>) -> Unit,
+    onDeleteCategory: (categoryId: String) -> Unit
 ) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showCannotDeleteDialog by remember { mutableStateOf(false) }
+
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onExpandToggle() }
                     .padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(categoryName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text(
+                    text = categoryName,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onExpandToggle() }
+                )
+
+                // Só exibe botão de deletar se estiver no modo edição E for deletável
+                if (isEditMode && deletable) {
+                    IconButton(
+                        onClick = {
+                            if (passwords.isEmpty()) {
+                                showDeleteConfirmation = true
+                            } else {
+                                showCannotDeleteDialog = true
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Excluir Categoria"
+                        )
+                    }
+                }
             }
+
             if (isExpanded) {
                 Divider()
                 Column(Modifier.padding(12.dp)) {
@@ -501,6 +576,45 @@ fun CategoryCard(
                 }
             }
         }
+    }
+
+    // Dialogo de confirmação para deletar categoria vazia
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Confirmar Exclusão") },
+            text = { Text("Deseja mesmo excluir a categoria '$categoryName'? Esta ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    onDeleteCategory(categoryId)
+                }) {
+                    Text("Confirmar", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialogo informando que não pode deletar categoria com senhas
+    if (showCannotDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showCannotDeleteDialog = false },
+            title = { Text("Não é possível excluir") },
+            text = { Text("A categoria '$categoryName' possui senhas cadastradas. Exclua todas as senhas antes de removê-la.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCannotDeleteDialog = false
+                }) {
+                    Text("Entendi")
+                }
+            },
+            dismissButton = {}
+        )
     }
 }
 
