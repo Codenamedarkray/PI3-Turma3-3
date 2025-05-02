@@ -2,155 +2,269 @@ package br.edu.puccampinas.superid.screens
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
 import br.edu.puccampinas.superid.MainActivity
+import br.edu.puccampinas.superid.R
 import br.edu.puccampinas.superid.WelcomeActivity
 import br.edu.puccampinas.superid.functions.performSignIn
-import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
+    /** FONTES **/
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showSnackbar by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Button(
-            onClick = {
-                val intent = Intent(context, WelcomeActivity::class.java)
-                context.startActivity(intent)
-            }
-        ) {
-            Text("←")
-        }
-
-        Text("LOGIN", fontSize = 20.sp)
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("E-mail") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Senha") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row (
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 16.dp)
-        ){
-            Text(
-                "Esqueceu a senha?",
-                fontSize = 16.sp
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Text(
-                "Clique Aqui!",
-                color = Color.Blue,
-                fontSize = 16.sp,
-                style = TextStyle(textDecoration = TextDecoration.Underline),
-                modifier = Modifier.clickable {
-                    navController.navigate("recover")
-                }
-            )
-        }
-
-        Button(
-            onClick = {
-                performSignIn(
-                    context,
-                    email.replace(" ", ""),
-                    password,
-                    onSuccess = {
-                        val intent = Intent(context, MainActivity::class.java)
-                        context.startActivity(intent)
-                    },
-                    onFailure = { exception ->
-                        Log.e("LOGIN", "ERRO AO ACESSAR A CONTA: ${exception.message}")
-                    }
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Entrar")
-        }
-
-        Row (
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 16.dp)
-        ){
-            Text(
-                "Ainda não possui conta?",
-                fontSize = 16.sp
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Text(
-                "Cadastre-se",
-                color = Color.Blue,
-                fontSize = 16.sp,
-                style = TextStyle(textDecoration = TextDecoration.Underline),
-                modifier = Modifier.clickable {
-                    navController.navigate("signup")
-                }
-            )
+    val coroutineScope = rememberCoroutineScope()
+    /** Validação básica de e-mail */
+    val isEmailValid = remember(email) {
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+    /** Efeito para esconder o Snackbar automaticamente após 3 segundos */
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            kotlinx.coroutines.delay(3000L)
+            showSnackbar = false
         }
     }
-}
+    /** Layout principal da tela de login */
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0D1117))
+            .padding(horizontal = 24.dp)
+    ) {
+        /** Coluna com os campos e botões do formulário */
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 100.dp, bottom = 48.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "LOGIN",
+                fontSize = 28.sp,
+                fontFamily = montserrat,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
 
-@Preview(showBackground = true)
-@Composable
-fun SignIpFormPreview() {
-    SuperIDTheme {
-        SignInForm(
-            modifier = Modifier,
-            navController = TODO()
-        )
+            /** CAMPO DE EMAIL**/
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("E-mail", fontFamily = montserrat) },
+                textStyle = TextStyle(color = Color.White),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                trailingIcon = {
+                    if (email.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isEmailValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isEmailValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF007BFF),
+                    unfocusedBorderColor = Color.Gray
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            /** CAMPO DE SENHA**/
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Senha", fontFamily = montserrat) },
+                textStyle = TextStyle(color = Color.White),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = icon, contentDescription = "Mostrar senha", tint = Color.White)
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF007BFF),
+                    unfocusedBorderColor = Color.Gray
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            /** Link para recuperar senha */
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate("recover") }
+                    .padding(bottom = 32.dp)
+            ) {
+                Text("Esqueceu a senha?", fontSize = 16.sp, fontFamily = montserrat, color = Color(0xFF9CA3AF))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Clique aqui!",
+                    fontSize = 16.sp,
+                    fontFamily = montserrat,
+                    color = Color(0xFF007BFF),
+                    style = TextStyle(textDecoration = TextDecoration.Underline)
+                )
+            }
+
+            /** Botão de login com carregamento */
+
+            Button(
+                onClick = {
+                    if (!isLoading) {
+                        coroutineScope.launch {
+                            isLoading = true
+                            performSignIn(
+                                context,
+                                email.replace(" ", ""),
+                                password,
+                                onSuccess = {
+                                    val intent = Intent(context, MainActivity::class.java)
+                                    context.startActivity(intent)
+                                    isLoading = false
+                                },
+                                onFailure = {
+                                    Log.e("LOGIN", "ERRO: ${it.message}")
+                                    showSnackbar = true
+                                    isLoading = false
+                                }
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Entrar", color = Color.White, fontSize = 16.sp)
+                    }
+                }
+            }
+
+            /** Link para cadastro */
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            ) {
+                Text("Ainda não possui conta?", fontSize = 16.sp, fontFamily = montserrat, color = Color(0xFF9CA3AF))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Cadastre-se",
+                    fontSize = 16.sp,
+                    fontFamily = montserrat,
+                    color = Color(0xFF007BFF),
+                    style = TextStyle(textDecoration = TextDecoration.Underline),
+                    modifier = Modifier.clickable { navController.navigate("signup") }
+                )
+            }
+        }
+
+        /** Snackbar animado para erro de login */
+
+        AnimatedVisibility(
+            visible = showSnackbar,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
+        ) {
+            Snackbar(
+                containerColor = Color(0xFFDC2626),
+                contentColor = Color.White,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth()
+            ) {
+                Text(
+                    text = "CREDENCIAIS INVÁLIDAS",
+                    fontFamily = montserrat,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }

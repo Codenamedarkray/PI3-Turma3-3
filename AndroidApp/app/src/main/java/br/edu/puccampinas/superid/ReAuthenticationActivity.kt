@@ -23,6 +23,8 @@ class ReAuthenticationActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     ReAuthenticationForm(
                         modifier = Modifier.padding(innerPadding)
+
+
                     )
                 }
             }

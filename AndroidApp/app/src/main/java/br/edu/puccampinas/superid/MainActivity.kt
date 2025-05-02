@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
+import br.edu.puccampinas.superid.screens.MainScreen
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,38 +25,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SuperIDTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainScreen(modifier = Modifier.padding(innerPadding))
-                }
+                    MainScreen()
             }
         }
     }
 }
 
-@Composable
-fun MainScreen(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
 
-    Column {
-        Text(
-            text = "Você está logado",
-            modifier = modifier
-        )
-
-        Button(
-            onClick = {
-                performLogout(context)
-            }
-        ) {
-            Text("Deslogar")
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview2() {
-    SuperIDTheme {
-        MainScreen()
-    }
-}

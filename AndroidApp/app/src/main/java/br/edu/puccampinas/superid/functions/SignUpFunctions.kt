@@ -9,6 +9,33 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 /**
+ * Função que cria as categorias padrão no documento
+ * do usuário no firebase
+ */
+fun addDefaultCategories(userId: String, onComplete: () -> Unit, onError: (Exception) -> Unit) {
+    val db = Firebase.firestore
+    val userDocRef = db.collection("users").document(userId) //pega o documento de usuário criado
+
+    val categories = listOf(
+        "Sites Web" to false,
+        "Aplicativos" to true,
+        "Teclados Físicos" to true
+    )
+
+    val batch = db.batch()  //executa várias instruções do firestore de uma vez
+
+    categories.forEach { (name, deletable) ->
+        val catRef = userDocRef.collection("category").document(name) //cria a referencia para cada documento
+        val catData = mapOf("deletable" to deletable)  //cria os dados para cada documento
+        batch.set(catRef, catData)
+    }
+
+    batch.commit() //executa todas as operações registradas no foreach
+        .addOnSuccessListener { onComplete() }
+        .addOnFailureListener { e -> onError(e) }
+}
+
+/**
  * Função que cria um usúario no Firebase Authentication,
  * e caso bem sucedido, salva as informações do usuário e dispositivo
  * no Firestore, no campo user
@@ -38,12 +65,19 @@ fun createUser(context: Context, name: String, email: String, password: String, 
                     db.collection("users").document(userId).set(user)
                         .addOnCompleteListener {
 
-                            saveEmailLocally(context, email)
-                            sendVerificationEmail()
-
-                            Log.d("FIREBASE", "Sucesso ao salvar os dados")
-
-                            onSuccess() // Chama o callback de sucesso
+                            addDefaultCategories(
+                                userId = userId,
+                                onComplete = {
+                                    saveEmailLocally(context, email)
+                                    sendVerificationEmail()
+                                    Log.d("FIREBASE", "Usuário e categorias criados com sucesso")
+                                    onSuccess()
+                                },
+                                onError = { categoryError ->
+                                    Log.e("FIREBASE", "Erro ao criar categorias", categoryError)
+                                    onFailure(categoryError)
+                                }
+                            )
 
                         }.addOnFailureListener { e ->
                             Log.e("FIREBASE", "Erro ao salvar dados", e)
