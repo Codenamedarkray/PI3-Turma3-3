@@ -1,5 +1,6 @@
 package br.edu.puccampinas.superid
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -34,37 +35,47 @@ class SplashActivity : ComponentActivity() {
 
         setContent {
             SuperIDTheme {
-                val sharedPreferences = getSharedPreferences("superid_prefs", MODE_PRIVATE)
+                val context = this@SplashActivity
+                var showSplash by remember { mutableStateOf(true) }
+
+                val sharedPreferences = context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
                 val hasSeenWelcome = sharedPreferences.getBoolean("has_seen_welcome", false)
                 val user = FirebaseAuth.getInstance().currentUser
 
                 when {
+                    showSplash -> {
+                        SplashScreen(onFinish = {
+                            showSplash = false
+                        })
+                    }
+
                     user != null -> {
                         LaunchedEffect(Unit) {
-                            startActivity(Intent(this@SplashActivity, ReAuthenticationActivity::class.java))
+                            context.startActivity(Intent(context, ReAuthenticationActivity::class.java))
                             finish()
                         }
                     }
 
                     !hasSeenWelcome -> {
                         WelcomeFlow(onFinish = {
-                            startActivity(Intent(this@SplashActivity, AuthenticationActivity::class.java))
+                            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
+                            context.startActivity(Intent(context, AuthenticationActivity::class.java))
                             finish()
                         })
                     }
 
                     else -> {
                         LaunchedEffect(Unit) {
-                            startActivity(Intent(this@SplashActivity, AuthenticationActivity::class.java))
+                            context.startActivity(Intent(context, AuthenticationActivity::class.java))
                             finish()
                         }
                     }
                 }
             }
         }
-
     }
 }
+
 
 
 
