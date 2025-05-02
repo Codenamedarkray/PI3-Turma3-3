@@ -77,7 +77,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "INSIRA A SENHA MESTRE",
+                text = "INSIRA A SENHA MESTRA",
                 fontFamily = montserrat,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,

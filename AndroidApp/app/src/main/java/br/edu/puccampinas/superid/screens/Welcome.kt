@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -40,8 +41,8 @@ data class PageInfo(
 
 @Composable
 fun WelcomeFlow(onFinish: () -> Unit) {
-    var showTermsScreen by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    var showTermsScreen by rememberSaveable { mutableStateOf(false) }
 
     if (!showTermsScreen) {
         WelcomeCarouselScreen(onFinishWelcome = {
@@ -49,12 +50,16 @@ fun WelcomeFlow(onFinish: () -> Unit) {
         })
     } else {
         TermsScreen(onAccepted = {
-            val sharedPreferences = context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
-            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
+            // Salva a flag para não mostrar novamente
+            context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("has_seen_welcome", true)
+                .apply()
             onFinish()
         })
     }
 }
+
 
 @Composable
 fun WelcomeCarouselScreen(onFinishWelcome: () -> Unit) {

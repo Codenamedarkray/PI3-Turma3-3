@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Visibility
@@ -40,13 +39,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainActivity
 import br.edu.puccampinas.superid.R
-import br.edu.puccampinas.superid.WelcomeActivity
 import br.edu.puccampinas.superid.functions.performSignIn
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 
 @Composable
 fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
-    /** FONTES **/
     val montserrat = FontFamily(
         Font(R.font.montserrat_regular, FontWeight.Normal),
         Font(R.font.montserrat_bold, FontWeight.Bold)
@@ -60,30 +59,28 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    /** Validação básica de e-mail */
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
-    /** Efeito para esconder o Snackbar automaticamente após 3 segundos */
+
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             kotlinx.coroutines.delay(3000L)
             showSnackbar = false
         }
     }
-    /** Layout principal da tela de login */
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        /** Coluna com os campos e botões do formulário */
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = 100.dp, bottom = 48.dp),
+                .padding(vertical = 72.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -96,8 +93,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
-
-            /** CAMPO DE EMAIL**/
 
             OutlinedTextField(
                 value = email,
@@ -123,8 +118,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-            /** CAMPO DE SENHA**/
-
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -147,8 +140,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-            /** Link para recuperar senha */
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -167,8 +158,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 )
             }
 
-            /** Botão de login com carregamento */
-
             Button(
                 onClick = {
                     if (!isLoading) {
@@ -179,8 +168,7 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                                 email.replace(" ", ""),
                                 password,
                                 onSuccess = {
-                                    val intent = Intent(context, MainActivity::class.java)
-                                    context.startActivity(intent)
+                                    context.startActivity(Intent(context, MainActivity::class.java))
                                     isLoading = false
                                 },
                                 onFailure = {
@@ -222,8 +210,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 }
             }
 
-            /** Link para cadastro */
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -244,19 +230,21 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        /** Snackbar animado para erro de login */
-
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
         ) {
             Snackbar(
                 containerColor = Color(0xFFDC2626),
                 contentColor = Color.White,
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth()
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
             ) {
                 Text(
                     text = "CREDENCIAIS INVÁLIDAS",

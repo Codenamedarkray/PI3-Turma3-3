@@ -1,7 +1,6 @@
 package br.edu.puccampinas.superid.screens
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,9 +9,12 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -36,7 +38,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainActivity
 import br.edu.puccampinas.superid.R
-import br.edu.puccampinas.superid.WelcomeActivity
 import br.edu.puccampinas.superid.functions.performSignUp
 import kotlinx.coroutines.launch
 
@@ -58,6 +59,10 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val isEmailValid = remember(email) {
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             kotlinx.coroutines.delay(3000L)
@@ -71,35 +76,11 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        // Botão Voltar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 36.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                    val intent = Intent(context, WelcomeActivity::class.java)
-                    context.startActivity(intent)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 100.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -110,7 +91,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 32.dp)
             )
 
             OutlinedTextField(
@@ -133,6 +114,15 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                trailingIcon = {
+                    if (email.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isEmailValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isEmailValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
@@ -247,7 +237,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        // Snackbar bonito
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),

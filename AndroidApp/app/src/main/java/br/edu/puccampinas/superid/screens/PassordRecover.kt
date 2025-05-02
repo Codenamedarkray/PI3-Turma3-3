@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,6 +49,10 @@ fun RecoverPasswordForm(navController: NavController) {
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
 
+    val isEmailValid = remember(email) {
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             kotlinx.coroutines.delay(3000L)
@@ -60,33 +66,26 @@ fun RecoverPasswordForm(navController: NavController) {
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        // Botão voltar
-        Row(
+        /** SETA DE VOLTAR NO TOPO **/
+        IconButton(
+            onClick = { navController.navigate("signin") },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 36.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .align(Alignment.TopStart)
+                .padding(top = 36.dp)
         ) {
-            Button(
-                onClick = { navController.navigate("signin") },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Voltar",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
         }
 
-        // Conteúdo principal
+        /** CONTEÚdo AGRUPADO E CENTRALIZADO **/
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp),
+                .padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -106,13 +105,22 @@ fun RecoverPasswordForm(navController: NavController) {
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                trailingIcon = {
+                    if (email.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isEmailValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isEmailValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 24.dp)
             )
 
             Button(
@@ -167,17 +175,13 @@ fun RecoverPasswordForm(navController: NavController) {
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text(
-                            text = "Enviar Link",
-                            color = Color.White,
-                            fontSize = 16.sp
-                        )
+                        Text("Enviar Link", color = Color.White, fontSize = 16.sp)
                     }
                 }
             }
         }
 
-        // Snackbar Bonito
+        /** SNACKBAR BONITO **/
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
