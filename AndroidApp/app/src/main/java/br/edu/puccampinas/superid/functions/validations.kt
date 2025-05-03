@@ -90,8 +90,8 @@ object validationUtils {
         Firebase.auth.signOut()
 
         // Limpa e-mail salvo localmente
-        val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        prefs.edit() { remove("user_email") }
+        val email = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        email.edit() { remove("user_email") }
 
         val intent = Intent(context, WelcomeActivity::class.java)
         context.startActivity(intent)

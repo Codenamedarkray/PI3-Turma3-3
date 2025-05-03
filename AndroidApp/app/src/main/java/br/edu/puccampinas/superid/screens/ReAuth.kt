@@ -11,8 +11,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -33,13 +35,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainActivity
 import br.edu.puccampinas.superid.R
+import br.edu.puccampinas.superid.ReAuthenticationActivity
+import br.edu.puccampinas.superid.functions.recoverPassword
+import br.edu.puccampinas.superid.functions.sendVerificationEmail
+import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
+import br.edu.puccampinas.superid.functions.validationUtils.getSavedEmail
 import br.edu.puccampinas.superid.functions.validationUtils.passwordIsInvalid
 import br.edu.puccampinas.superid.functions.validationUtils.reauthenticateUser
 
 @Composable
-fun ReAuthenticationForm(modifier: Modifier = Modifier) {
+fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavController) {
     val montserrat = FontFamily(
         Font(R.font.montserrat_regular, FontWeight.Normal),
         Font(R.font.montserrat_bold, FontWeight.Bold)
@@ -107,6 +115,14 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .padding(bottom = 24.dp)
             )
+
+            Row(){
+                Text("Esqueceu a senha?", color = Color.White)
+                Text("Clique aqui",
+                    modifier = Modifier.clickable { navController.navigate("recover") },
+                    color = Color.Blue
+                    )
+            }
 
             Button(
                 onClick = {
@@ -195,3 +211,72 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
         }
     }
 }
+
+@Composable
+fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController){
+    val context = LocalContext.current
+    var isLoading by remember { mutableStateOf(true) }
+    var resultMessage by remember { mutableStateOf<String?>("Erro ao enviar email de recuperação. Tente novamente mais tarde.") }
+    var isVerified by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        val email = getSavedEmail(context)
+
+        checkUserEmailVerification(
+            onResult = { userVerified ->
+                isVerified = userVerified
+                if (!isVerified) {
+                    sendVerificationEmail()
+                    resultMessage = "Seu email ainda não foi verificado. Um novo email de verificação foi enviado para $email."
+                    isLoading = false
+                } else {
+
+                    recoverPassword(
+                        email = email.toString(),
+                        onSuccess = {
+                            resultMessage = "Email de recuperação de senha enviado para $email."
+                            isLoading = false
+                        },
+                        onFailure = {
+                            isLoading = false
+                        }
+                    )
+
+                }
+            },
+            onFailure = {/*n sei*/}
+        )
+
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Email,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = resultMessage ?: "Erro desconhecido.",
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = {
+                    navController.popBackStack()
+                }) {
+                    Text("Voltar")
+                }
+            }
+        }
+    }
+}
+

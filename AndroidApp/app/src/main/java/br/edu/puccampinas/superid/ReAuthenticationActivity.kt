@@ -11,7 +11,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import br.edu.puccampinas.superid.screens.ReAuthenticationForm
+import br.edu.puccampinas.superid.screens.RecoverPassword
+import br.edu.puccampinas.superid.screens.RecoverPasswordForm
+import br.edu.puccampinas.superid.screens.SignInForm
+import br.edu.puccampinas.superid.screens.SignUpForm
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 
 class ReAuthenticationActivity : ComponentActivity() {
@@ -21,14 +28,19 @@ class ReAuthenticationActivity : ComponentActivity() {
         setContent {
             SuperIDTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ReAuthenticationForm(
-                        modifier = Modifier.padding(innerPadding)
-
-
-                    )
+                    ReAuthenticationNav(modifier = Modifier)
                 }
             }
         }
     }
 }
 
+@Composable
+fun ReAuthenticationNav(modifier: Modifier) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "reauth") {
+        composable("reauth") { ReAuthenticationForm(navController = navController) }
+        composable("recover") { RecoverPassword(navController = navController) }
+    }
+}
