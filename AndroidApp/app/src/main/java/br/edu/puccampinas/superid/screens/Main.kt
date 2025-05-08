@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -173,37 +175,49 @@ fun MainScreen() {
             )
         }
     ) { innerPadding ->
-        //identifica se barra de rolagem é necessária
-        val scrollState = rememberScrollState()
+        val listState = rememberLazyListState()
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(scrollState)
+                .padding(16.dp),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Se email não verificado, exibe aviso
             if (!verifiedEmail) {
-                Text(message, color = messageColor)
-            }
-
-            Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { isCategoryEditMode = !isCategoryEditMode }) {
-                    Icon(
-                        imageVector = if (isCategoryEditMode) Icons.Default.Check else Icons.Default.Edit,
-                        contentDescription = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                item {
+                    Text(
+                        text = message,
+                        color = messageColor
                     )
                 }
-                var text = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
-                Text(text)
             }
 
-            categories.forEach { category ->
+            // Título
+            item {
+                Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+
+            // Botão de edição de categorias
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { isCategoryEditMode = !isCategoryEditMode }) {
+                        Icon(
+                            imageVector = if (isCategoryEditMode) Icons.Default.Check else Icons.Default.Edit,
+                            contentDescription = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                        )
+                    }
+                    val text = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                    Text(text)
+                }
+            }
+
+            // Lista de categorias
+            items(categories.size) { index ->
+                val category = categories[index]
                 val categoryId = category.id
                 val categoryName = categoryId
                 val isExpanded = expandedMap[categoryId] ?: false
@@ -222,7 +236,6 @@ fun MainScreen() {
                         selectedPlatformName = platformName
                         selectedPlatformData = platformData
                         selectedCategoryId = categoryId
-
                         viewPasswordDialog = true
                     },
                     onDeleteCategory = { categoryIdToDelete ->
@@ -241,7 +254,7 @@ fun MainScreen() {
                                     }
                                 )
                             },
-                            onFailure = { /* erro */ }
+                            onFailure = { /* Tratar erro aqui se necessário */ }
                         )
                     }
                 )
