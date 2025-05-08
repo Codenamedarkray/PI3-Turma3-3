@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
@@ -171,10 +173,14 @@ fun MainScreen() {
             )
         }
     ) { innerPadding ->
+        //identifica se barra de rolagem é necessária
+        val scrollState = rememberScrollState()
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp)
+                .verticalScroll(scrollState)
         ) {
             if (!verifiedEmail) {
                 Text(message, color = messageColor)
