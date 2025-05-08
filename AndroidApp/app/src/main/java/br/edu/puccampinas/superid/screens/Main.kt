@@ -30,6 +30,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -169,9 +170,10 @@ fun MainScreen() {
         topBar = { TopAppBarWithLogout { performLogout(context) } },
         bottomBar = { BottomAppBarContent() },
         floatingActionButton = {
-            FabMenu(
-                onNewPasswordClick = { showCreatePasswordDialog = true },
-                onNewCategoryClick = { showCreateCategoryDialog = true }
+            ExtendedFloatingActionButton(
+                onClick = { showCreateCategoryDialog = true },
+                icon = { Icon(Icons.Default.Add, "Nova Categoria") },
+                text = { Text("Nova Categoria") }
             )
         }
     ) { innerPadding ->
@@ -256,6 +258,10 @@ fun MainScreen() {
                             },
                             onFailure = { /* Tratar erro aqui se necessário */ }
                         )
+                    },
+                    onAddPasswordClick = {
+                        selectedCategoryForPassword = categoryId
+                        showCreatePasswordDialog = true
                     }
                 )
             }
@@ -301,9 +307,7 @@ fun MainScreen() {
     }
     if (showCreatePasswordDialog) {
         NewPasswordDialog(
-            categories = categories,
-            selectedCategory = selectedCategoryForPassword,
-            onCategorySelected = { selectedCategoryForPassword = it },
+            categoryName = selectedCategoryForPassword, // Passa o nome da categoria
             title = newPasswordTitle,
             email = newPasswordEmail,
             password = newPasswordPassword,
@@ -440,40 +444,6 @@ fun BottomAppBarContent() {
 }
 
 @Composable
-fun FabMenu(onNewPasswordClick: () -> Unit, onNewCategoryClick: () -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        FloatingActionButton(
-            onClick = { expanded = !expanded },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Novo")
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Nova Senha") },
-                onClick = {
-                    expanded = false
-                    onNewPasswordClick()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Nova Categoria") },
-                onClick = {
-                    expanded = false
-                    onNewCategoryClick()
-                }
-            )
-        }
-    }
-}
-
-@Composable
 fun NewCategoryDialog(
     newCategoryName: String,
     isCategoryNameValid: Boolean,
@@ -528,7 +498,8 @@ fun CategoryCard(
     deletable: Boolean,
     onExpandToggle: () -> Unit,
     onPasswordClick: (platformName: String, platformData: Map<String, Any?>) -> Unit,
-    onDeleteCategory: (categoryId: String) -> Unit
+    onDeleteCategory: (categoryId: String) -> Unit,
+    onAddPasswordClick: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showCannotDeleteDialog by remember { mutableStateOf(false) }
@@ -544,7 +515,8 @@ fun CategoryCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = categoryName,
@@ -555,21 +527,30 @@ fun CategoryCard(
                         .clickable { onExpandToggle() }
                 )
 
-                // Só exibe botão de deletar se estiver no modo edição E for deletável
-                if (isEditMode && deletable) {
-                    IconButton(
-                        onClick = {
-                            if (passwords.isEmpty()) {
-                                showDeleteConfirmation = true
-                            } else {
-                                showCannotDeleteDialog = true
-                            }
+                Row {
+                    // Botão de adicionar senha (oculta se isEditMode for true)
+                    if (!isEditMode) {
+                        IconButton(onClick = onAddPasswordClick) {
+                            Icon(Icons.Default.Add, contentDescription = "Adicionar Senha")
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Excluir Categoria"
-                        )
+                    }
+
+                    // Só exibe botão de deletar se estiver no modo edição E for deletável
+                    if (isEditMode && deletable) {
+                        IconButton(
+                            onClick = {
+                                if (passwords.isEmpty()) {
+                                    showDeleteConfirmation = true
+                                } else {
+                                    showCannotDeleteDialog = true
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Excluir Categoria"
+                            )
+                        }
                     }
                 }
             }
@@ -639,9 +620,7 @@ fun CategoryCard(
 
 @Composable
 fun NewPasswordDialog(
-    categories: List<DocumentSnapshot>,
-    selectedCategory: String?,
-    onCategorySelected: (String) -> Unit,
+    categoryName: String?,
     title: String,
     email: String,
     password: String,
@@ -658,20 +637,19 @@ fun NewPasswordDialog(
         title = { Text("Nova Senha") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (categories.isNotEmpty()) {
-                    DropdownMenuCategories(
-                        categories = categories,
-                        selectedCategory = selectedCategory,
-                        onCategorySelected = onCategorySelected
-                    )
-                }
+                TextField(
+                    value = categoryName ?: "", // Exibe o nome da categoria
+                    onValueChange = {}, // Impede a edição
+                    label = { Text("Categoria") },
+                    singleLine = true,
+                    enabled = false // Desabilita o campo
+                )
                 TextField(
                     value = title,
                     onValueChange = onTitleChange,
                     label = { Text("Título da Plataforma*") },
                     singleLine = true,
                     isError = title == "deletable"
-
                 )
                 TextField(
                     value = email,
@@ -695,7 +673,7 @@ fun NewPasswordDialog(
         confirmButton = {
             TextButton(
                 onClick = onSave,
-                enabled = !title.isBlank() && selectedCategory != null && !password.isBlank() && title != "deletable"
+                enabled = !title.isBlank() && categoryName != null && !password.isBlank() && title != "deletable"
             ) {
                 Text("Salvar")
             }
