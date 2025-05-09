@@ -18,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -528,13 +530,10 @@ fun CategoryCard(
                 )
 
                 Row {
-                    // Botão de adicionar senha (oculta se isEditMode for true)
-                    if (!isEditMode) {
-                        IconButton(onClick = onAddPasswordClick) {
-                            Icon(Icons.Default.Add, contentDescription = "Adicionar Senha")
-                        }
+                    if(!isEditMode) {
+                        Icon(if (isExpanded) Icons.Default.ArrowDropDown else Icons.Default.ArrowRight,
+                            contentDescription = if (isExpanded)  "Expandido" else "Retraido")
                     }
-
                     // Só exibe botão de deletar se estiver no modo edição E for deletável
                     if (isEditMode && deletable) {
                         IconButton(
@@ -558,6 +557,10 @@ fun CategoryCard(
             if (isExpanded) {
                 Divider()
                 Column(Modifier.padding(12.dp)) {
+                    TextButton(onClick = onAddPasswordClick) {
+                        Icon(Icons.Default.Add, contentDescription = "Adicionar Senha")
+                        Text("Adicionar senha")
+                    }
                     if (passwords.isEmpty()) {
                         Text("Nenhuma senha cadastrada.", fontSize = 14.sp, color = Color.Gray)
                     } else {
@@ -684,39 +687,6 @@ fun NewPasswordDialog(
             }
         }
     )
-}
-
-@Composable
-fun DropdownMenuCategories(
-    categories: List<DocumentSnapshot>,
-    selectedCategory: String?,
-    onCategorySelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        OutlinedButton(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(selectedCategory ?: "Selecione uma categoria")
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            categories.forEach { category ->
-                DropdownMenuItem(
-                    text = { Text(category.id) },
-                    onClick = {
-                        onCategorySelected(category.id)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
 }
 
 @Composable
