@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,8 +25,12 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -37,6 +42,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -61,6 +68,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import br.edu.puccampinas.superid.BottomNavigationBar
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewCategory
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.createNewPassword
 import br.edu.puccampinas.superid.functions.PasswordStorageUtils.deleteCategory
@@ -76,15 +86,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun PasswordScreen(innerPadding: PaddingValues){
     val context = LocalContext.current
     val uid = Firebase.auth.currentUser?.uid ?: return
 
-    var verifiedEmail by remember { mutableStateOf(false) }
+    var verifiedEmail by remember { mutableStateOf(true) }
     val message = "Email não verificado, não será capaz de recuperar senha"
     val messageColor = Color.Red
 
@@ -93,7 +100,11 @@ fun MainScreen() {
 
     //guarda um Mapa ligando o nome da categoria com um par de valores(nome da plataforma, Mapa
     // ligando atributo da plataforma com valor do atributo)
-    var passwordsMap by remember { mutableStateOf<Map<String, List<Pair<String, Map<String, Any?>>>>>(emptyMap()) }
+    var passwordsMap by remember {
+        mutableStateOf<Map<String, List<Pair<String, Map<String, Any?>>>>>(
+            emptyMap()
+        )
+    }
 
     // Guada o nome das categorias ligadas a se elas estão expandidas mostrando as senhas
     val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
@@ -122,8 +133,8 @@ fun MainScreen() {
 
     checkUserEmailVerification(
         onResult = { isVerified ->
-            if (isVerified) {
-                verifiedEmail = true
+            if (!isVerified) {
+                verifiedEmail = false
             }
         },
         onFailure = { e ->
@@ -159,7 +170,7 @@ fun MainScreen() {
                     }
                 }
             )
-        }else{
+        } else {
             Toast.makeText(
                 context,
                 "Erro ao carregar informações, reinicie o App",
@@ -167,107 +178,107 @@ fun MainScreen() {
             ).show()
         }
     }
+    val listState = rememberLazyListState()
 
-    Scaffold(
-        topBar = { TopAppBarWithLogout { performLogout(context) } },
-        bottomBar = { BottomAppBarContent() },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showCreateCategoryDialog = true },
-                icon = { Icon(Icons.Default.Add, "Nova Categoria") },
-                text = { Text("Nova Categoria") }
-            )
-        }
-    ) { innerPadding ->
-        val listState = rememberLazyListState()
-
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Se email não verificado, exibe aviso
-            if (!verifiedEmail) {
-                item {
-                    Text(
-                        text = message,
-                        color = messageColor
-                    )
-                }
-            }
-
-            // Título
+    LazyColumn(
+        modifier = Modifier
+            .padding(innerPadding)
+            .padding(16.dp),
+        state = listState,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Se email não verificado, exibe aviso
+        if (!verifiedEmail) {
             item {
-                Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            }
-
-            // Botão de edição de categorias
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { isCategoryEditMode = !isCategoryEditMode }) {
-                        Icon(
-                            imageVector = if (isCategoryEditMode) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
-                        )
-                    }
-                    val text = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
-                    Text(text)
-                }
-            }
-
-            // Lista de categorias
-            items(categories.size) { index ->
-                val category = categories[index]
-                val categoryId = category.id
-                val categoryName = categoryId
-                val isExpanded = expandedMap[categoryId] ?: false
-                val deletable = category.getBoolean("deletable") ?: true
-                val passwords = passwordsMap[categoryId] ?: emptyList()
-
-                CategoryCard(
-                    categoryId = categoryId,
-                    categoryName = categoryName,
-                    isExpanded = isExpanded,
-                    passwords = passwords,
-                    isEditMode = isCategoryEditMode,
-                    deletable = deletable,
-                    onExpandToggle = { expandedMap[categoryId] = !isExpanded },
-                    onPasswordClick = { platformName, platformData ->
-                        selectedPlatformName = platformName
-                        selectedPlatformData = platformData
-                        selectedCategoryId = categoryId
-                        viewPasswordDialog = true
-                    },
-                    onDeleteCategory = { categoryIdToDelete ->
-                        deleteCategory(
-                            uid = uid,
-                            categoryId = categoryIdToDelete,
-                            onSuccess = {
-                                fetchPasswordData(
-                                    uid = uid,
-                                    onCategoriesFetched = { categories = it },
-                                    onPasswordsFetched = { passwordsMap = it },
-                                    onExpandedMapUpdated = { expanded ->
-                                        expanded.forEach { (key, value) ->
-                                            expandedMap.putIfAbsent(key, value)
-                                        }
-                                    }
-                                )
-                            },
-                            onFailure = { /* Tratar erro aqui se necessário */ }
-                        )
-                    },
-                    onAddPasswordClick = {
-                        selectedCategoryForPassword = categoryId
-                        showCreatePasswordDialog = true
-                    }
+                Text(
+                    text = message,
+                    color = messageColor
                 )
             }
         }
+
+        // Título
+        item {
+            Text("Minhas Senhas", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        }
+
+        // Botão de edição de categorias
+        item {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(onClick = {isCategoryEditMode = !isCategoryEditMode}) {
+                    Icon(
+                        imageVector = if (isCategoryEditMode) Icons.Default.Check else Icons.Default.Edit,
+                        contentDescription = if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                    )
+                    val text =
+                        if (isCategoryEditMode) "Finalizar Edição" else "Editar Categorias"
+                    Text(text)
+                }
+
+                Button(onClick = { showCreateCategoryDialog = true }){
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Adicionar Categoria"
+                    )
+                    Text("Adicionar categoria")
+                }
+
+
+
+            }
+        }
+
+        // Lista de categorias
+        items(categories.size) { index ->
+            val category = categories[index]
+            val categoryId = category.id
+            val categoryName = categoryId
+            val isExpanded = expandedMap[categoryId] ?: false
+            val deletable = category.getBoolean("deletable") ?: true
+            val passwords = passwordsMap[categoryId] ?: emptyList()
+
+            CategoryCard(
+                categoryId = categoryId,
+                categoryName = categoryName,
+                isExpanded = isExpanded,
+                passwords = passwords,
+                isEditMode = isCategoryEditMode,
+                deletable = deletable,
+                onExpandToggle = { expandedMap[categoryId] = !isExpanded },
+                onPasswordClick = { platformName, platformData ->
+                    selectedPlatformName = platformName
+                    selectedPlatformData = platformData
+                    selectedCategoryId = categoryId
+                    viewPasswordDialog = true
+                },
+                onDeleteCategory = { categoryIdToDelete ->
+                    deleteCategory(
+                        uid = uid,
+                        categoryId = categoryIdToDelete,
+                        onSuccess = {
+                            fetchPasswordData(
+                                uid = uid,
+                                onCategoriesFetched = { categories = it },
+                                onPasswordsFetched = { passwordsMap = it },
+                                onExpandedMapUpdated = { expanded ->
+                                    expanded.forEach { (key, value) ->
+                                        expandedMap.putIfAbsent(key, value)
+                                    }
+                                }
+                            )
+                        },
+                        onFailure = { /* Tratar erro aqui se necessário */ }
+                    )
+                },
+                onAddPasswordClick = {
+                    selectedCategoryForPassword = categoryId
+                    showCreatePasswordDialog = true
+                }
+            )
+        }
+
     }
 
     if (showCreateCategoryDialog) {
@@ -276,7 +287,8 @@ fun MainScreen() {
             isCategoryNameValid = isCategoryNameValid,
             onNameChange = { text ->
                 newCategoryName = text
-                isCategoryNameValid = categories.none { it.id.equals(newCategoryName, ignoreCase = true) }
+                isCategoryNameValid =
+                    categories.none { it.id.equals(newCategoryName, ignoreCase = true) }
             },
             onDismiss = {
                 showCreateCategoryDialog = false
@@ -354,7 +366,7 @@ fun MainScreen() {
         )
     }
 
-    if(viewPasswordDialog){
+    if (viewPasswordDialog) {
         ViewPasswordDialog(
             categoryId = selectedCategoryId,
             platformName = selectedPlatformName,
@@ -384,7 +396,8 @@ fun MainScreen() {
                         )
                     },
                     onFailure = {
-                        Toast.makeText(context, "Erro ao salvar alterações", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Erro ao salvar alterações", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 )
             },
@@ -406,7 +419,8 @@ fun MainScreen() {
                         )
                     },
                     onFailure = {
-                        Toast.makeText(context, "Erro ao deletar senha", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Erro ao deletar senha", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 )
             }
@@ -429,20 +443,6 @@ fun TopAppBarWithLogout(onLogout: () -> Unit) {
         },
         title = { Text("SuperID") }
     )
-}
-
-@Composable
-fun BottomAppBarContent() {
-    BottomAppBar(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.primary,
-    ) {
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            text = "Ícones a serem colocados",
-        )
-    }
 }
 
 @Composable
@@ -816,10 +816,4 @@ fun ViewPasswordDialog(
             }
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreview(){
-    MainScreen()
 }
