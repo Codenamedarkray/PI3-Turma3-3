@@ -81,26 +81,32 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String) {
     NavigationBar {
         NavigationBarItem(
             selected = currentRoute == "main",
-            onClick = { navController.navigate("main") },
-            icon = {
-                Icon(Icons.Default.Lock, contentDescription = "Senhas")
+            onClick = {
+                if (currentRoute != "main") {
+                    navController.navigate("main")
+                }
             },
+            icon = { Icon(Icons.Default.Lock, contentDescription = "Senhas") },
             label = { Text("Senhas") }
         )
         NavigationBarItem(
             selected = currentRoute == "qr",
-            onClick = { navController.navigate("qr") },
-            icon = {
-                Icon(Icons.Default.QrCodeScanner, contentDescription = "QR Code")
+            onClick = {
+                if (currentRoute != "qr") {
+                    navController.navigate("qr")
+                }
             },
+            icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = "QR Code") },
             label = { Text("QR Code") }
         )
         NavigationBarItem(
             selected = currentRoute == "profile",
-            onClick = { navController.navigate("profile") },
-            icon = {
-                Icon(Icons.Default.Person, contentDescription = "Perfil")
+            onClick = {
+                if (currentRoute != "profile") {
+                    navController.navigate("profile")
+                }
             },
+            icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
             label = { Text("Perfil") }
         )
     }
