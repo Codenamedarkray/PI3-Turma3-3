@@ -9,6 +9,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
 camerax = "1.4.1"
+scanner = "4.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,9 @@ androidx-camera-camera2 = { group="androidx.camera", name="camera-camera2", vers
 androidx-camera-lifecycle = { group="androidx.camera", name="camera-lifecycle", version.ref="camerax" }
 androidx-camera-view = { group="androidx.camera", name="camera-view", version.ref="camerax" }
 androidx-camera-extensions = { group="androidx.camera", name="camera-extensions", version.ref="camerax" }
+
+#biblioteca leitor QR code
+scanner = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "scanner" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

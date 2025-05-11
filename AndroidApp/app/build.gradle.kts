@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.androidx.camera.extensions)
 
     //Zxing - Decodificador de QRcode
-    implementation("com.google.zxing:core3.3.3")
+    implementation(libs.scanner)
+
 
 }

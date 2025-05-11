@@ -86,7 +86,9 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String) {
                     navController.navigate("main")
                 }
             },
-            icon = { Icon(Icons.Default.Lock, contentDescription = "Senhas") },
+            icon = {
+                Icon(Icons.Default.Lock, contentDescription = "Senhas")
+            },
             label = { Text("Senhas") }
         )
         NavigationBarItem(
@@ -96,7 +98,9 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String) {
                     navController.navigate("qr")
                 }
             },
-            icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = "QR Code") },
+            icon = {
+                Icon(Icons.Default.QrCodeScanner, contentDescription = "QR Code")
+            },
             label = { Text("QR Code") }
         )
         NavigationBarItem(
@@ -106,7 +110,9 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String) {
                     navController.navigate("profile")
                 }
             },
-            icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
+            icon = {
+                Icon(Icons.Default.Person, contentDescription = "Perfil")
+            },
             label = { Text("Perfil") }
         )
     }
