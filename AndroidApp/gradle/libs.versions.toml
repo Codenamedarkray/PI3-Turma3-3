@@ -8,6 +8,7 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
+camerax = "1.4.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -24,6 +25,13 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+#bibliotecas de câmera
+androidx-camera-core = { group="androidx.camera", name="camera-core", version.ref="camerax" }
+androidx-camera-camera2 = { group="androidx.camera", name="camera-camera2", version.ref="camerax" }
+androidx-camera-lifecycle = { group="androidx.camera", name="camera-lifecycle", version.ref="camerax" }
+androidx-camera-view = { group="androidx.camera", name="camera-view", version.ref="camerax" }
+androidx-camera-extensions = { group="androidx.camera", name="camera-extensions", version.ref="camerax" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
