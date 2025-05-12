@@ -64,7 +64,7 @@ export const performAuth = onRequest(async (req, res) => {
 
     const qrCodeBase64 = await generateQRCodeBase64(loginToken);
 
-    res.status(200).send({ qrBase64: qrCodeBase64 });
+    res.status(200).send({ qrBase64: qrCodeBase64, loginToken: loginToken });
   } catch (error) {
     logger.error("Erro em performAuth", error);
     res.status(500).send("Internal server error");
@@ -99,7 +99,7 @@ export const getLoginStatus = onRequest(async (req, res) => {
 
     if (diff > 60 || (loginData?.attempts ?? 0) >= 3) {
       await loginDocRef.delete();
-      res.status(410).send("Token expired or too many attempts");
+      res.status(410).send({ status: "expired" });
       return;
     }
 
@@ -109,7 +109,7 @@ export const getLoginStatus = onRequest(async (req, res) => {
     });
 
     if (loginData?.user) {
-      res.status(200).send({ uid: loginData.user });
+      res.status(200).send({ status: "success", uid: loginData.user });
     } else {
       res.status(202).send({ status: "pending" });
     }
