@@ -530,7 +530,7 @@ fun NewCategoryDialog(
             confirmButton = {
                 Button(
                     onClick = onSave,
-                    enabled = isCategoryNameValid,
+                    enabled = isCategoryNameValid && newCategoryName.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
