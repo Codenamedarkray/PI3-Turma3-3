@@ -2,10 +2,8 @@ package br.edu.puccampinas.superid.functions
 
 import android.annotation.SuppressLint
 import android.util.Base64
-import androidx.compose.runtime.MutableState
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.security.SecureRandom
@@ -88,9 +86,11 @@ object PasswordStorageUtils {
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
+        val encrypted = encrypt(password)
+
         val passwordData = mapOf(
             "email" to email,
-            "password" to password,
+            "password" to encrypted,
             "description" to description,
             "accessToken" to generateRandomBase64Token()
         )
@@ -116,6 +116,7 @@ object PasswordStorageUtils {
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
+
         db.collection("users").document(uid)
             .collection("category").document(category)
             .update(mapOf(title to updatedData))

@@ -114,6 +114,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.shape.RoundedCornerShape
+import br.edu.puccampinas.superid.functions.decrypt
+import br.edu.puccampinas.superid.functions.encrypt
 
 
 @Composable
@@ -962,8 +964,17 @@ fun ViewPasswordDialog(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     var email by remember { mutableStateOf(initialData["email"] as? String ?: "") }
-    var password by remember { mutableStateOf(initialData["password"] as? String ?: "") }
+    var password by remember { mutableStateOf(decrypt(initialData["password"].toString()) as? String ?: "") }
     var description by remember { mutableStateOf(initialData["description"] as? String ?: "") }
+
+    onSave(
+        mapOf(
+            "email" to email,
+            "password" to encrypt(password),
+            "description" to description,
+            "accessToken" to newAcessToken
+        )
+    )
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Color(0xFF007BFF),
@@ -1059,7 +1070,7 @@ fun ViewPasswordDialog(
                             onSave(
                                 mapOf(
                                     "email" to email,
-                                    "password" to password,
+                                    "password" to encrypt(password),
                                     "description" to description,
                                     "accessToken" to newAcessToken
                                 )
