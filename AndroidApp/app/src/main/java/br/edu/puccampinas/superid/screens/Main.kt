@@ -969,7 +969,6 @@ fun NewPasswordDialog(
     }
 }
 
-
 @Composable
 fun ViewPasswordDialog(
     categoryId: String,
@@ -984,43 +983,50 @@ fun ViewPasswordDialog(
         Font(R.font.montserrat_bold, FontWeight.Bold)
     )
 
-    val newAcessToken = generateRandomBase64Token()
-
     var isEditing by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var attemptedSave by remember { mutableStateOf(false) }
 
     var email by remember { mutableStateOf(initialData["email"] as? String ?: "") }
     var password by remember { mutableStateOf(decrypt(initialData["password"].toString()) as? String ?: "") }
     var description by remember { mutableStateOf(initialData["description"] as? String ?: "") }
 
-    onSave(
-        mapOf(
-            "email" to email,
-            "password" to encrypt(password),
-            "description" to description,
-            "accessToken" to newAcessToken
-        )
-    )
+    val passwordHasError = attemptedSave && isEditing && password.isBlank()
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Color(0xFF007BFF),
         unfocusedBorderColor = Color.Gray,
         focusedLabelColor = Color(0xFF007BFF),
-        cursorColor = Color.White
+        cursorColor = Color.White,
+        errorBorderColor = Color.Red,
+        errorLabelColor = Color.Red,
+        errorCursorColor = Color.Red
     )
+
+    val canSave = !password.isBlank()
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
         title = {
-            Text(
-                text = "Detalhes da Senha",
-                fontFamily = montserrat,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = Color.White,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Detalhes da Senha",
+                    fontFamily = montserrat,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = if (isEditing) "Modo edição" else "Modo visualização",
+                    color = if (isEditing) Color(0xFF00BCD4) else Color(0xFF9CA3AF),
+                    fontSize = 14.sp,
+                    fontFamily = montserrat,
+                    modifier = Modifier.padding(top = 4.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
         },
         text = {
             Column(
@@ -1030,115 +1036,172 @@ fun ViewPasswordDialog(
                     .padding(top = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(
-                    value = platformName,
-                    onValueChange = {},
-                    label = { Text("Plataforma", fontFamily = montserrat) },
-                    singleLine = true,
-                    enabled = false,
-                    textStyle = TextStyle(color = Color.White),
-                    colors = textFieldColors,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Text("Plataforma", color = Color.White, fontFamily = montserrat, fontSize = 14.sp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(text = platformName, color = Color.White, fontFamily = montserrat)
+                }
+                Divider(color = Color(0xFF1F2937))
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { if (isEditing) email = it },
-                    label = { Text("Email/Login", fontFamily = montserrat) },
-                    singleLine = true,
-                    enabled = true,
-                    textStyle = TextStyle(color = Color.White),
-                    colors = textFieldColors,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { if (isEditing) password = it },
-                    label = { Text("Senha", fontFamily = montserrat) },
-                    isError = password.isBlank(),
-                    enabled = true,
-                    singleLine = true,
-                    textStyle = TextStyle(color = Color.White),
-                    colors = textFieldColors,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { if (isEditing) description = it },
-                    label = { Text("Descrição", fontFamily = montserrat) },
-                    enabled = true,
-                    textStyle = TextStyle(color = Color.White),
-                    colors = textFieldColors,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Text("Email/Login", color = Color.White, fontFamily = montserrat, fontSize = 14.sp)
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        placeholder = { Text("Email/Login", fontFamily = montserrat, color = Color.Gray) },
+                        singleLine = true,
+                        textStyle = TextStyle(color = Color.White),
+                        colors = textFieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(text = email.ifBlank { "—" }, color = Color.White, fontFamily = montserrat)
+                    }
+                }
+                Divider(color = Color(0xFF1F2937))
+
+                Text("Senha", color = Color.White, fontFamily = montserrat, fontSize = 14.sp)
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                        },
+                        placeholder = { Text("Senha", fontFamily = montserrat, color = Color.Gray) },
+                        isError = passwordHasError,
+                        singleLine = true,
+                        textStyle = TextStyle(color = Color.White),
+                        colors = textFieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(text = password.ifBlank { "—" }, color = Color.White, fontFamily = montserrat)
+                    }
+                }
+                Divider(color = Color(0xFF1F2937))
+
+                Text("Descrição", color = Color.White, fontFamily = montserrat, fontSize = 14.sp)
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        placeholder = { Text("Descrição", fontFamily = montserrat, color = Color.Gray) },
+                        textStyle = TextStyle(color = Color.White),
+                        colors = textFieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(text = description.ifBlank { "—" }, color = Color.White, fontFamily = montserrat)
+                    }
+                }
             }
         },
         containerColor = Color(0xFF0D1117),
         confirmButton = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = { showDeleteConfirmation = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
                 ) {
-                    Text("Deletar", fontFamily = montserrat, color = Color.White)
-                }
-                Button(
-                    onClick = {
-                        if (isEditing) {
-                            onSave(
-                                mapOf(
-                                    "email" to email,
-                                    "password" to encrypt(password),
-                                    "description" to description,
-                                    "accessToken" to newAcessToken
+                    Button(
+                        onClick = { showDeleteConfirmation = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text("Deletar", fontFamily = montserrat, color = Color.White)
+                    }
+
+                    Button(
+                        onClick = {
+                            attemptedSave = true
+                            if (isEditing && canSave) {
+                                onSave(
+                                    mapOf(
+                                        "email" to email,
+                                        "password" to encrypt(password),
+                                        "description" to description,
+                                        "accessToken" to generateRandomBase64Token()
+                                    )
                                 )
+                                isEditing = false
+                            } else if (!isEditing) {
+                                isEditing = true
+                            }
+                        },
+                        enabled = !isEditing || canSave,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = if (!isEditing || canSave) ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                        else ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                        contentPadding = PaddingValues()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    brush = if (!isEditing || canSave)
+                                        Brush.horizontalGradient(colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4)))
+                                    else
+                                        Brush.horizontalGradient(colors = listOf(Color.Gray, Color.Gray)),
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (isEditing) "Salvar" else "Editar",
+                                fontFamily = montserrat,
+                                color = Color.White
                             )
                         }
-                        isEditing = !isEditing
-                    },
-                    enabled = !isEditing || password.isNotBlank(),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    contentPadding = PaddingValues()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
-                                ),
-                                shape = MaterialTheme.shapes.medium
-                            )
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (isEditing) "Salvar" else "Editar",
-                            fontFamily = montserrat,
-                            color = Color.White
-                        )
                     }
                 }
-                OutlinedButton(
-                    onClick = onDismiss,
+                Text(
+                    text = "Cancelar",
+                    color = Color(0xFF9CA3AF),
+                    fontSize = 14.sp,
+                    fontFamily = montserrat,
                     modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                    border = BorderStroke(1.dp, Color.White)
-                ) {
-                    Text("Fechar", fontFamily = montserrat)
-                }
+                        .align(Alignment.End)
+                        .padding(top = 8.dp, end = 4.dp)
+                        .clickable { onDismiss() }
+                )
             }
         }
     )
@@ -1186,7 +1249,7 @@ fun ViewPasswordDialog(
                             .weight(1f)
                             .height(48.dp)
                     ) {
-                        Text("Confirmar", fontFamily = montserrat, color = Color.White)
+                        Text("Deletar", fontFamily = montserrat, color = Color.White)
                     }
 
                     OutlinedButton(
