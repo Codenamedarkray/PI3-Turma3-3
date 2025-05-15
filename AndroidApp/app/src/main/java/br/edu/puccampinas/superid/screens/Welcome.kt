@@ -50,7 +50,6 @@ fun WelcomeFlow(onFinish: () -> Unit) {
         })
     } else {
         TermsScreen(onAccepted = {
-            // Salva a flag para não mostrar novamente
             context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
                 .edit()
                 .putBoolean("has_seen_welcome", true)

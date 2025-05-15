@@ -113,9 +113,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+//import androidx.compose.foundation.layout.BoxScopeInstance.align
+//import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.shape.RoundedCornerShape
 import br.edu.puccampinas.superid.functions.decrypt
 import br.edu.puccampinas.superid.functions.encrypt
+
 
 
 @Composable
@@ -779,6 +784,21 @@ fun NewPasswordDialog(
     )
 
     var visible by remember { mutableStateOf(false) }
+    var showErrors by remember { mutableStateOf(false) }
+
+    val titleHasError = showErrors && title.isBlank()
+    val passwordHasError = showErrors && password.isBlank()
+    val isFormValid = title.isNotBlank() && password.isNotBlank() && categoryName != null
+
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = Color(0xFF007BFF),
+        unfocusedBorderColor = Color.Gray,
+        focusedLabelColor = Color(0xFF007BFF),
+        cursorColor = Color.White,
+        errorBorderColor = Color.Red,
+        errorLabelColor = Color.Red,
+        errorCursorColor = Color.Red
+    )
 
     LaunchedEffect(Unit) {
         visible = true
@@ -806,13 +826,6 @@ fun NewPasswordDialog(
                 )
             },
             text = {
-                val textFieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF007BFF),
-                    unfocusedBorderColor = Color.Gray,
-                    focusedLabelColor = Color(0xFF007BFF),
-                    cursorColor = Color.White
-                )
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -820,42 +833,43 @@ fun NewPasswordDialog(
                         .padding(top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = "Categoria",
-                            fontFamily = montserrat,
-                            color = Color(0xFF9CA3AF),
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .background(Color.Transparent)
-                                .border(
-                                    width = 1.dp,
-                                    color = Color.Gray,
-                                    shape = MaterialTheme.shapes.medium
-                                )
-                                .padding(horizontal = 16.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = categoryName ?: "",
-                                fontFamily = montserrat,
-                                color = Color.White,
-                                fontSize = 16.sp
+                    Text(
+                        text = "Categoria",
+                        fontFamily = montserrat,
+                        color = Color(0xFF9CA3AF),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color.Transparent)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Gray,
+                                shape = MaterialTheme.shapes.medium
                             )
-                        }
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = categoryName ?: "",
+                            fontFamily = montserrat,
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
                     }
 
                     OutlinedTextField(
                         value = title,
-                        onValueChange = onTitleChange,
+                        onValueChange = {
+                            onTitleChange(it)
+                            if (showErrors) showErrors = false
+                        },
                         label = { Text("Título da Plataforma*", fontFamily = montserrat) },
                         singleLine = true,
-                        isError = title == "deletable",
+                        isError = titleHasError,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
                         modifier = Modifier.fillMaxWidth()
@@ -864,7 +878,7 @@ fun NewPasswordDialog(
                     OutlinedTextField(
                         value = email,
                         onValueChange = onEmailChange,
-                        label = { Text("Email/Login (Opcional)", fontFamily = montserrat) },
+                        label = { Text("Email/Login", fontFamily = montserrat) },
                         singleLine = true,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
@@ -873,9 +887,13 @@ fun NewPasswordDialog(
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = onPasswordChange,
+                        onValueChange = {
+                            onPasswordChange(it)
+                            if (showErrors) showErrors = false
+                        },
                         label = { Text("Senha*", fontFamily = montserrat) },
                         singleLine = true,
+                        isError = passwordHasError,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
                         modifier = Modifier.fillMaxWidth()
@@ -884,7 +902,7 @@ fun NewPasswordDialog(
                     OutlinedTextField(
                         value = description,
                         onValueChange = onDescriptionChange,
-                        label = { Text("Descrição (Opcional)", fontFamily = montserrat) },
+                        label = { Text("Descrição", fontFamily = montserrat) },
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
                         modifier = Modifier.fillMaxWidth()
@@ -913,20 +931,30 @@ fun NewPasswordDialog(
                     }
 
                     Button(
-                        onClick = onSave,
-                        enabled = !title.isBlank() && categoryName != null && !password.isBlank() && title != "deletable",
+                        onClick = {
+                            if (isFormValid) {
+                                visible = false
+                                onSave()
+                            } else {
+                                showErrors = true
+                            }
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isFormValid) Color.Transparent else Color.Gray
+                        ),
                         contentPadding = PaddingValues()
                     ) {
                         Box(
                             modifier = Modifier
                                 .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
-                                    ),
+                                    brush = if (isFormValid)
+                                        Brush.horizontalGradient(
+                                            colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                                        )
+                                    else Brush.verticalGradient(listOf(Color.Gray, Color.Gray)),
                                     shape = MaterialTheme.shapes.medium
                                 )
                                 .fillMaxSize(),
@@ -940,8 +968,6 @@ fun NewPasswordDialog(
         )
     }
 }
-
-
 
 
 @Composable

@@ -116,12 +116,27 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                     .padding(bottom = 24.dp)
             )
 
-            Row(){
-                Text("Esqueceu a senha?", color = Color.White)
-                Text("Clique aqui",
-                    modifier = Modifier.clickable { navController.navigate("recover") },
-                    color = Color.Blue
-                    )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Esqueceu a senha?",
+                    color = Color.White,
+                    fontFamily = montserrat,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Clique aqui",
+                    color = Color(0xFF007BFF),
+                    fontFamily = montserrat,
+                    fontSize = 14.sp,
+                    modifier = Modifier.clickable { navController.navigate("recover") }
+                )
             }
 
             Button(
@@ -213,70 +228,101 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
 }
 
 @Composable
-fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController){
+fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController) {
     val context = LocalContext.current
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
     var isLoading by remember { mutableStateOf(true) }
     var resultMessage by remember { mutableStateOf<String?>("Erro ao enviar email de recuperação. Tente novamente mais tarde.") }
     var isVerified by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        isLoading = true
         val email = getSavedEmail(context)
-
         checkUserEmailVerification(
             onResult = { userVerified ->
                 isVerified = userVerified
                 if (!isVerified) {
                     sendVerificationEmail()
-                    resultMessage = "Seu email ainda não foi verificado. Um novo email de verificação foi enviado para $email."
-                    isLoading = false
+                    resultMessage = "Seu email ainda não foi verificado.\nUm novo email de verificação foi enviado para $email."
                 } else {
-
                     recoverPassword(
                         email = email.toString(),
                         onSuccess = {
                             resultMessage = "Email de recuperação de senha enviado para $email."
-                            isLoading = false
                         },
                         onFailure = {
-                            isLoading = false
+                            resultMessage = "Erro ao enviar email de recuperação. Tente novamente mais tarde."
                         }
                     )
-
                 }
+                isLoading = false
             },
-            onFailure = {/*n sei*/}
+            onFailure = {
+                resultMessage = "Erro ao verificar email. Tente novamente."
+                isLoading = false
+            }
         )
-
     }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFF0D1117))
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         if (isLoading) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = Color.White)
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
                     imageVector = Icons.Default.Email,
                     contentDescription = null,
+                    tint = Color.White,
                     modifier = Modifier.size(64.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = resultMessage ?: "Erro desconhecido.",
-                    textAlign = TextAlign.Center
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    fontFamily = montserrat
                 )
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = {
-                    navController.popBackStack()
-                }) {
-                    Text("Voltar")
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                                ),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Voltar",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontFamily = montserrat
+                        )
+                    }
                 }
             }
         }
     }
 }
+
 
