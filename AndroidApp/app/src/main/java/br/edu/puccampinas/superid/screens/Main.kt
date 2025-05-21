@@ -115,6 +115,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.size
 //import androidx.compose.foundation.layout.BoxScopeInstance.align
 //import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -235,9 +236,9 @@ fun PasswordScreen(innerPadding: PaddingValues) {
                     border = BorderStroke(1.dp, Color.White),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
+                    Icon(if(!isCategoryEditMode) Icons.Default.Edit else Icons.Default.Close, contentDescription = null, tint = Color.White)
                     Spacer(Modifier.width(8.dp))
-                    Text("Editar Categorias", fontFamily = montserrat, color = Color.White)
+                    Text(if(!isCategoryEditMode)"Editar Categorias" else "Cancelar Edição", fontFamily = montserrat, color = Color.White)
                 }
                 OutlinedButton(
                     onClick = { showCreateCategoryDialog = true },
@@ -441,43 +442,6 @@ fun PasswordScreen(innerPadding: PaddingValues) {
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopAppBarWithLogout(onLogout: () -> Unit) {
-    val montserrat = FontFamily(
-        Font(R.font.montserrat_regular, FontWeight.Normal),
-        Font(R.font.montserrat_bold, FontWeight.Bold)
-    )
-
-    TopAppBar(
-        title = {
-            Text(
-                text = "SuperID",
-                fontFamily = montserrat,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = Color.White
-            )
-        },
-        actions = {
-            IconButton(onClick = onLogout) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Logout",
-                    tint = Color.White
-                )
-            }
-        },
-        colors = topAppBarColors(
-            containerColor = Color(0xFF0D1117),
-            titleContentColor = Color.White,
-            actionIconContentColor = Color.White
-        )
-    )
-}
-
-
 @Composable
 fun NewCategoryDialog(
     newCategoryName: String,
@@ -630,11 +594,14 @@ fun CategoryCard(
                             } else {
                                 showCannotDeleteDialog = true
                             }
-                        }) {
+                        },
+                            modifier = Modifier.size(23.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Excluir",
-                                tint = Color(0xFFDC2626)
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(23.dp)
                             )
                         }
                     }

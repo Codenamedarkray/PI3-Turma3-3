@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -44,6 +46,7 @@ import br.edu.puccampinas.superid.functions.sendVerificationEmail
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.getSavedEmail
 import br.edu.puccampinas.superid.functions.validationUtils.passwordIsInvalid
+import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import br.edu.puccampinas.superid.functions.validationUtils.reauthenticateUser
 
 @Composable
@@ -78,6 +81,13 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
+        IconButton(onClick = { performLogout(context) } ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Logout,
+                contentDescription = "Logout",
+                tint = Color.White,
+            )
+        }
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
