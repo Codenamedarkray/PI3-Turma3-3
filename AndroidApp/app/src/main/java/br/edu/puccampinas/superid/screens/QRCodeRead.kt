@@ -45,6 +45,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import br.edu.puccampinas.superid.BottomNavigationBar
 import br.edu.puccampinas.superid.functions.confirmLogin
 import br.edu.puccampinas.superid.functions.validQRCode
+import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import br.edu.puccampinas.superid.permissions.WithPermission
 import com.google.firebase.auth.ktx.auth
@@ -63,7 +64,39 @@ import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
 
 @Composable
-fun ReadQRCodeScreen(innerPadding: androidx.compose.foundation.layout.PaddingValues) {
+fun EmailNotValidatedDialog(onDismiss: () -> Unit){
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Email não verificado!") },
+        text = { Text("Para utilizar a funcionalidade login sem senha, por favor verifique seu email.") },
+        confirmButton = {
+            TextButton(onClick = {
+                onDismiss()
+            }) {
+                Text("Ok")
+            }
+        }
+    )
+}
+
+@Composable
+fun ReadQRCodeScreen(
+    innerPadding: androidx.compose.foundation.layout.PaddingValues,
+    navController: NavController
+) {
+    var verifiedEmail by remember {mutableStateOf(true)}
+    checkUserEmailVerification(
+        onResult = { isVerified ->
+            if (!isVerified) verifiedEmail = false
+        },
+        onFailure = { }
+    )
+
+    if(!verifiedEmail){
+        EmailNotValidatedDialog {
+            navController.popBackStack()
+        }
+    }
     WithPermission(
         modifier = Modifier.padding(innerPadding),
         permission = Manifest.permission.CAMERA,

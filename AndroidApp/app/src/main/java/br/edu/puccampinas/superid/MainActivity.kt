@@ -80,7 +80,7 @@ fun ScaffoldLayout(navController: NavHostController){
 fun MainActivityNav(innerPadding: PaddingValues, navController: NavHostController) {
     NavHost(navController = navController, startDestination = "main", modifier = Modifier.fillMaxSize()) {
         composable("main") { PasswordScreen(innerPadding = innerPadding) }
-        composable("qr") { ReadQRCodeScreen(innerPadding = innerPadding) }
+        composable("qr") { ReadQRCodeScreen(innerPadding = innerPadding, navController = navController) }
         composable("profile") { UserProfileScreen(innerPadding = innerPadding) }
     }
 }
