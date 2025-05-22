@@ -115,6 +115,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 //import androidx.compose.foundation.layout.BoxScopeInstance.align
 //import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
@@ -227,30 +228,85 @@ fun PasswordScreen(innerPadding: PaddingValues) {
         }
 
         item {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .border(1.dp, Color.White, shape = MaterialTheme.shapes.medium)
             ) {
-                OutlinedButton(
-                    onClick = { isCategoryEditMode = !isCategoryEditMode },
-                    border = BorderStroke(1.dp, Color.White),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(if(!isCategoryEditMode) Icons.Default.Edit else Icons.Default.Close, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text(if(!isCategoryEditMode)"Editar Categorias" else "Cancelar Edição", fontFamily = montserrat, color = Color.White)
-                }
-                OutlinedButton(
-                    onClick = { showCreateCategoryDialog = true },
-                    border = BorderStroke(1.dp, Color.White),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Nova Categoria", fontFamily = montserrat, color = Color.White)
+                Row(modifier = Modifier.fillMaxSize()) {
+
+                    // Botão Editar Categorias
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { isCategoryEditMode = !isCategoryEditMode }
+                            .background(if (isCategoryEditMode) Color(0xFF1F2937) else Color.Transparent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = if (!isCategoryEditMode) Icons.Default.Edit else Icons.Default.Close,
+                                contentDescription = null,
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                if (!isCategoryEditMode) "Editar Categorias" else "Cancelar Edição",
+                                fontFamily = montserrat,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    // Divisor vertical
+                    Divider(
+                        color = Color.White,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(1.dp)
+                    )
+
+                    // Botão Nova Categoria
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { showCreateCategoryDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                "Nova Categoria",
+                                fontFamily = montserrat,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
                 }
             }
         }
+
+
+
+
 
         items(categories.size) { index ->
             val category = categories[index]

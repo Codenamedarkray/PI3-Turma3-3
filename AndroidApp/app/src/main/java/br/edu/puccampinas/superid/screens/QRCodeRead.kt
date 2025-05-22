@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,8 +34,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -43,6 +50,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import br.edu.puccampinas.superid.BottomNavigationBar
+import br.edu.puccampinas.superid.R
 import br.edu.puccampinas.superid.functions.confirmLogin
 import br.edu.puccampinas.superid.functions.validQRCode
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
@@ -64,27 +72,71 @@ import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
 
 @Composable
-fun EmailNotValidatedDialog(onDismiss: () -> Unit){
+fun EmailNotValidatedDialog(onDismiss: () -> Unit) {
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Email não verificado!") },
-        text = { Text("Para utilizar a funcionalidade login sem senha, por favor verifique seu email.") },
+        containerColor = Color(0xFF0D1117),
+        title = {
+            Text(
+                "Email não verificado!",
+                fontFamily = montserrat,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color.White,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                "Para utilizar a funcionalidade login sem senha, por favor verifique seu email.",
+                fontFamily = montserrat,
+                fontSize = 14.sp,
+                color = Color(0xFFD1D5DB),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         confirmButton = {
-            TextButton(onClick = {
-                onDismiss()
-            }) {
-                Text("Ok")
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Ok", color = Color.White, fontFamily = montserrat)
+                }
             }
         }
     )
 }
 
+
 @Composable
 fun ReadQRCodeScreen(
-    innerPadding: androidx.compose.foundation.layout.PaddingValues,
+    innerPadding: PaddingValues,
     navController: NavController
 ) {
-    var verifiedEmail by remember {mutableStateOf(true)}
+    var verifiedEmail by remember { mutableStateOf(true) }
+
     checkUserEmailVerification(
         onResult = { isVerified ->
             if (!isVerified) verifiedEmail = false
@@ -92,17 +144,20 @@ fun ReadQRCodeScreen(
         onFailure = { }
     )
 
-    if(!verifiedEmail){
-        EmailNotValidatedDialog {
-            navController.popBackStack()
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1117))) {
+        if (!verifiedEmail) {
+            EmailNotValidatedDialog {
+                navController.popBackStack()
+            }
         }
-    }
-    WithPermission(
-        modifier = Modifier.padding(innerPadding),
-        permission = Manifest.permission.CAMERA,
-        buttonLabelPermission = "Conceder permissão de câmera"
-    ) {
-        QRScannerScreen()
+
+        WithPermission(
+            modifier = Modifier.padding(innerPadding),
+            permission = Manifest.permission.CAMERA,
+            buttonLabelPermission = "Conceder permissão de câmera"
+        ) {
+            QRScannerScreen()
+        }
     }
 }
 
@@ -112,21 +167,65 @@ fun ConfirmLoginWithoutPasswordDialog(
     onDismiss: () -> Unit,
     onConfirm: (DocumentSnapshot?) -> Unit
 ) {
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Confirmação de Login") },
-        text = { Text("Deseja se autenticar no site?") },
+        containerColor = Color(0xFF0D1117),
+        title = {
+            Text(
+                "Confirmação de Login",
+                fontFamily = montserrat,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color.White,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                "Deseja se autenticar no site?",
+                fontFamily = montserrat,
+                fontSize = 14.sp,
+                color = Color(0xFFD1D5DB),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         confirmButton = {
-            TextButton(onClick = {
-                onConfirm(document)
-                onDismiss()
-            }) {
-                Text("Sim")
+            Button(
+                onClick = {
+                    onConfirm(document)
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Sim", color = Color.White, fontFamily = montserrat)
+                }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text("Cancelar", fontFamily = montserrat, color = Color(0xFF9CA3AF))
             }
         }
     )
@@ -134,13 +233,57 @@ fun ConfirmLoginWithoutPasswordDialog(
 
 @Composable
 fun InvalidQRCodeDialog(onDismiss: () -> Unit) {
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("QR Code Inválido") },
-        text = { Text("Este QR Code é inválido ou expirou.") },
+        containerColor = Color(0xFF0D1117),
+        title = {
+            Text(
+                "QR Code Inválido",
+                fontFamily = montserrat,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color.White,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                "Este QR Code é inválido ou expirou.",
+                fontFamily = montserrat,
+                fontSize = 14.sp,
+                color = Color(0xFFD1D5DB),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("OK")
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("OK", color = Color.White, fontFamily = montserrat)
+                }
             }
         }
     )

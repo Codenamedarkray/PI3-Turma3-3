@@ -62,6 +62,8 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
+    val isPasswordValid = password.length >= 6
+    val isNameValid = name.trim().length >= 1
 
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
@@ -99,6 +101,15 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 onValueChange = { name = it },
                 label = { Text("Nome", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
+                trailingIcon = {
+                    if (name.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isNameValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isNameValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
@@ -154,9 +165,23 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
+
+
+            AnimatedVisibility(visible = password.isNotBlank()) {
+                Text(
+                    text = if (isPasswordValid) "Senha válida" else "A senha deve ter no mínimo 6 caracteres",
+                    color = if (isPasswordValid) Color(0xFF00FF00) else Color(0xFFFF5555),
+                    fontSize = 12.sp,
+                    fontFamily = montserrat,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 16.dp)
+                )
+            }
+
             Button(
                 onClick = {
-                    if (!isLoading) {
+                    if (isPasswordValid && !isLoading) {
                         coroutineScope.launch {
                             isLoading = true
                             performSignUp(
@@ -176,6 +201,9 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                                 }
                             )
                         }
+                    } else if (!isPasswordValid) {
+                        snackbarMessage = "Erro ao criar conta. Confira todos os campos e tente novamente."
+                        showSnackbar = true
                     }
                 },
                 modifier = Modifier

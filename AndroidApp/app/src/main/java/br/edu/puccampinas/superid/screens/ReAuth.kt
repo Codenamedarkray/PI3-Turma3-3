@@ -151,7 +151,9 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
 
             Button(
                 onClick = {
-                    if (!passwordIsInvalid(password) && !isLoading) {
+                    if (passwordIsInvalid(password)) {
+                        showSnackbar = true
+                    } else if (!isLoading) {
                         isButtonPressed = true
                         isLoading = true
                         reauthenticateUser(
@@ -171,6 +173,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                             }
                         )
                     }
+
                 },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -209,29 +212,33 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
             }
         }
 
-        // Snackbar agora aparece embaixo fixo
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = 24.dp, vertical = 32.dp)
         ) {
-            Snackbar(
-                containerColor = Color(0xFFDC2626),
-                contentColor = Color.White,
+            Surface(
+                color = Color(0xFFDC2626),
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .fillMaxWidth()
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "SENHA INCORRETA",
-                    fontFamily = montserrat,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Box(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Senha incorreta. Tente novamente.",
+                        fontFamily = montserrat,
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
