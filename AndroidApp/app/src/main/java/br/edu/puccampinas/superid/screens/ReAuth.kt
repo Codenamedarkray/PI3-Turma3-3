@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -44,6 +46,7 @@ import br.edu.puccampinas.superid.functions.sendVerificationEmail
 import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
 import br.edu.puccampinas.superid.functions.validationUtils.getSavedEmail
 import br.edu.puccampinas.superid.functions.validationUtils.passwordIsInvalid
+import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import br.edu.puccampinas.superid.functions.validationUtils.reauthenticateUser
 
 @Composable
@@ -78,6 +81,13 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
+        IconButton(onClick = { performLogout(context) } ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Logout,
+                contentDescription = "Logout",
+                tint = Color.White,
+            )
+        }
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -141,7 +151,9 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
 
             Button(
                 onClick = {
-                    if (!passwordIsInvalid(password) && !isLoading) {
+                    if (passwordIsInvalid(password)) {
+                        showSnackbar = true
+                    } else if (!isLoading) {
                         isButtonPressed = true
                         isLoading = true
                         reauthenticateUser(
@@ -161,6 +173,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                             }
                         )
                     }
+
                 },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -199,29 +212,33 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
             }
         }
 
-        // Snackbar agora aparece embaixo fixo
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = 24.dp, vertical = 32.dp)
         ) {
-            Snackbar(
-                containerColor = Color(0xFFDC2626),
-                contentColor = Color.White,
+            Surface(
+                color = Color(0xFFDC2626),
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .fillMaxWidth()
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "SENHA INCORRETA",
-                    fontFamily = montserrat,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Box(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Senha incorreta. Tente novamente.",
+                        fontFamily = montserrat,
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

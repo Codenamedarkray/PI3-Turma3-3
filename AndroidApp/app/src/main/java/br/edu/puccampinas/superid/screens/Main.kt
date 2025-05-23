@@ -115,6 +115,8 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
 //import androidx.compose.foundation.layout.BoxScopeInstance.align
 //import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -226,30 +228,85 @@ fun PasswordScreen(innerPadding: PaddingValues) {
         }
 
         item {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .border(1.dp, Color.White, shape = MaterialTheme.shapes.medium)
             ) {
-                OutlinedButton(
-                    onClick = { isCategoryEditMode = !isCategoryEditMode },
-                    border = BorderStroke(1.dp, Color.White),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Editar Categorias", fontFamily = montserrat, color = Color.White)
-                }
-                OutlinedButton(
-                    onClick = { showCreateCategoryDialog = true },
-                    border = BorderStroke(1.dp, Color.White),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Nova Categoria", fontFamily = montserrat, color = Color.White)
+                Row(modifier = Modifier.fillMaxSize()) {
+
+                    // Botão Editar Categorias
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { isCategoryEditMode = !isCategoryEditMode }
+                            .background(if (isCategoryEditMode) Color(0xFF1F2937) else Color.Transparent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = if (!isCategoryEditMode) Icons.Default.Edit else Icons.Default.Close,
+                                contentDescription = null,
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                if (!isCategoryEditMode) "Editar Categorias" else "Cancelar Edição",
+                                fontFamily = montserrat,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    // Divisor vertical
+                    Divider(
+                        color = Color.White,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(1.dp)
+                    )
+
+                    // Botão Nova Categoria
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { showCreateCategoryDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                "Nova Categoria",
+                                fontFamily = montserrat,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
                 }
             }
         }
+
+
+
+
 
         items(categories.size) { index ->
             val category = categories[index]
@@ -441,43 +498,6 @@ fun PasswordScreen(innerPadding: PaddingValues) {
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopAppBarWithLogout(onLogout: () -> Unit) {
-    val montserrat = FontFamily(
-        Font(R.font.montserrat_regular, FontWeight.Normal),
-        Font(R.font.montserrat_bold, FontWeight.Bold)
-    )
-
-    TopAppBar(
-        title = {
-            Text(
-                text = "SuperID",
-                fontFamily = montserrat,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = Color.White
-            )
-        },
-        actions = {
-            IconButton(onClick = onLogout) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Logout",
-                    tint = Color.White
-                )
-            }
-        },
-        colors = topAppBarColors(
-            containerColor = Color(0xFF0D1117),
-            titleContentColor = Color.White,
-            actionIconContentColor = Color.White
-        )
-    )
-}
-
-
 @Composable
 fun NewCategoryDialog(
     newCategoryName: String,
@@ -630,11 +650,14 @@ fun CategoryCard(
                             } else {
                                 showCannotDeleteDialog = true
                             }
-                        }) {
+                        },
+                            modifier = Modifier.size(23.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Excluir",
-                                tint = Color(0xFFDC2626)
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(23.dp)
                             )
                         }
                     }
