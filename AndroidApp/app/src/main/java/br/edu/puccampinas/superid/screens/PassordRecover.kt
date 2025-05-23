@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.edu.puccampinas.superid.R
+import br.edu.puccampinas.superid.functions.forceRecoverPassword
 import br.edu.puccampinas.superid.functions.recoverPassword
 import br.edu.puccampinas.superid.functions.validationUtils.emailIsInvalid
 import kotlinx.coroutines.launch
@@ -48,6 +49,7 @@ fun RecoverPasswordForm(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
+    var snackbarColor by remember { mutableStateOf(Color(0xFFDC2626)) }
 
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -128,24 +130,27 @@ fun RecoverPasswordForm(navController: NavController) {
                     if (!isLoading) {
                         coroutineScope.launch {
                             isLoading = true
-                            if (emailIsInvalid(email)) {
-                                recoverPassword(
+                            if (!emailIsInvalid(email)) {
+                                forceRecoverPassword(
                                     email = email,
                                     onSuccess = {
                                         snackbarMessage = "Link enviado para o e-mail."
                                         showSnackbar = true
                                         isLoading = false
+                                        snackbarColor = Color(0xFF007BFF)
                                     },
                                     onFailure = {
                                         snackbarMessage = "Erro: ${it.message ?: "Erro desconhecido"}"
                                         showSnackbar = true
                                         isLoading = false
+                                        snackbarColor = Color(0xFFDC2626)
                                     }
                                 )
                             } else {
                                 snackbarMessage = "E-mail inválido"
                                 showSnackbar = true
                                 isLoading = false
+                                snackbarColor = Color(0xFFDC2626)
                             }
                         }
                     }
@@ -187,11 +192,11 @@ fun RecoverPasswordForm(navController: NavController) {
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 70.dp)
         ) {
             Snackbar(
-                containerColor = Color(0xFFDC2626),
+                containerColor = snackbarColor,
                 contentColor = Color.White,
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier

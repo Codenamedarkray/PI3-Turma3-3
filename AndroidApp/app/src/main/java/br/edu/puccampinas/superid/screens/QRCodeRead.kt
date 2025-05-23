@@ -3,6 +3,7 @@ package br.edu.puccampinas.superid.screens
 import android.Manifest
 import android.content.Intent
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
@@ -309,6 +310,7 @@ fun QRScannerScreen() {
                     barcodeView.decoderFactory = DefaultDecoderFactory(listOf(BarcodeFormat.QR_CODE))
                     initializeFromIntent(Intent())
                     resume()
+                    statusView.visibility = View.GONE
                 }
 
                 barcodeView.decodeContinuous(object : BarcodeCallback {
@@ -352,13 +354,6 @@ fun QRScannerScreen() {
             }
         )
 
-        // Se quiser mostrar algo com o resultado:
-        scannedText?.let {
-            Text(
-                text = "Último código: $it",
-                modifier = Modifier.padding(16.dp)
-            )
-        }
     }
 
     if(invalidDialog){

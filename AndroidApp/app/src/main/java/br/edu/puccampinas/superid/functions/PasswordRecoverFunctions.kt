@@ -32,3 +32,17 @@ fun recoverPassword(
         }
     )
 }
+
+/**
+ * Quando o usuário está deslogado, recupera de qualquer jeito
+ */
+fun forceRecoverPassword(
+    email: String,
+    onSuccess: () -> Unit,
+    onFailure: (Exception) -> Unit
+) {
+    Firebase.auth.sendPasswordResetEmail(email)
+        .addOnSuccessListener { onSuccess() }
+        .addOnFailureListener { onFailure(it) }
+
+}

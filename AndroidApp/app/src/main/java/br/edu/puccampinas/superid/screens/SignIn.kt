@@ -236,8 +236,8 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 70.dp)
         ) {
             Snackbar(
                 containerColor = Color(0xFFDC2626),

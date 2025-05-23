@@ -218,8 +218,8 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 24.dp, vertical = 70.dp)
         ) {
             Surface(
                 color = Color(0xFFDC2626),
@@ -263,7 +263,14 @@ fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController)
             onResult = { userVerified ->
                 isVerified = userVerified
                 if (!isVerified) {
-                    sendVerificationEmail()
+                    sendVerificationEmail(
+                        onSuccess = {
+
+                        },
+                        onFailure = {
+
+                        }
+                    )
                     resultMessage = "Seu email ainda não foi verificado.\nUm novo email de verificação foi enviado para $email."
                 } else {
                     recoverPassword(
