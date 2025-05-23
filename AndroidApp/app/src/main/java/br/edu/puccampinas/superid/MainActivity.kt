@@ -2,6 +2,7 @@ package br.edu.puccampinas.superid
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -74,6 +75,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ScaffoldLayout(navController: NavHostController){
     val context = LocalContext.current
+    BackHandler(enabled = true){
+
+    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
@@ -112,15 +116,6 @@ fun TopAppBarWithLogout(onLogout: () -> Unit) {
                 fontSize = 20.sp,
                 color = Color.White
             )
-        },
-        actions = {
-            IconButton(onClick = onLogout) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Logout",
-                    tint = Color.White
-                )
-            }
         },
         colors = topAppBarColors(
             containerColor = Color(0xFF0D1117),

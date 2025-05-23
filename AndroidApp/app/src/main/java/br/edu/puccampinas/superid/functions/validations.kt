@@ -9,6 +9,7 @@ import androidx.core.content.edit
 import br.edu.puccampinas.superid.WelcomeActivity
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 object validationUtils {
@@ -138,5 +139,25 @@ object validationUtils {
 
     }
 
+    /**
+     * Função que pega o nome de usuário do firebase e o devolve
+     */
+    fun getUsername(
+        onSuccess: (String?) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val db = Firebase.firestore
+        val uid = Firebase.auth.currentUser?.uid ?: return onFailure(Exception("Usuário não autenticado"))
+
+        db.collection("users").document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+                val username = document.getString("NAME")
+                onSuccess(username)
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
+            }
+    }
 
 }

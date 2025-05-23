@@ -169,6 +169,7 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                                 password,
                                 onSuccess = {
                                     context.startActivity(Intent(context, MainActivity::class.java))
+
                                     isLoading = false
                                 },
                                 onFailure = {

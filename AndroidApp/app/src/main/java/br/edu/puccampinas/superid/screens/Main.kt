@@ -363,7 +363,7 @@ fun PasswordScreen(innerPadding: PaddingValues) {
             isCategoryNameValid = isCategoryNameValid,
             onNameChange = {
                 newCategoryName = it
-                isCategoryNameValid = categories.none { it.id.equals(newCategoryName, ignoreCase = true) }
+                isCategoryNameValid = categories.none { it.id.equals(newCategoryName.trim(), ignoreCase = true) }
             },
             onDismiss = {
                 showCreateCategoryDialog = false

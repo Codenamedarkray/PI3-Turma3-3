@@ -192,6 +192,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                                 onSuccess = {
                                     val intent = Intent(context, MainActivity::class.java)
                                     context.startActivity(intent)
+
                                     isLoading = false
                                 },
                                 onFailure = {

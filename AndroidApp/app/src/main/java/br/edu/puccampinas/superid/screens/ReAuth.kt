@@ -164,6 +164,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                                 isLoading = false
                                 val intent = Intent(context, MainActivity::class.java)
                                 context.startActivity(intent)
+
                             },
                             onFailure = { exception ->
                                 Log.e("LOGIN", "ERRO AO AUTENTICAR: ${exception.message}")
