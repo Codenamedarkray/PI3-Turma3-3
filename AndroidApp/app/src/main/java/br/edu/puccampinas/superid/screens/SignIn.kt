@@ -43,6 +43,10 @@ import br.edu.puccampinas.superid.functions.performSignIn
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
@@ -62,6 +66,8 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
+
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
@@ -99,7 +105,13 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 onValueChange = { email = it },
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
                 trailingIcon = {
                     if (email.isNotBlank()) {
                         Icon(
@@ -124,7 +136,13 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                 label = { Text("Senha", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -169,7 +187,6 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavController) {
                                 password,
                                 onSuccess = {
                                     context.startActivity(Intent(context, MainActivity::class.java))
-
                                     isLoading = false
                                 },
                                 onFailure = {

@@ -56,7 +56,7 @@ class SplashActivity : ComponentActivity() {
                         }
                     }
 
-                    !hasSeenWelcome -> {
+                    else -> {
                         WelcomeFlow(onFinish = {
                             sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
                             context.startActivity(Intent(context, AuthenticationActivity::class.java))
@@ -64,12 +64,6 @@ class SplashActivity : ComponentActivity() {
                         })
                     }
 
-                    else -> {
-                        LaunchedEffect(Unit) {
-                            context.startActivity(Intent(context, AuthenticationActivity::class.java))
-                            finish()
-                        }
-                    }
                 }
             }
         }

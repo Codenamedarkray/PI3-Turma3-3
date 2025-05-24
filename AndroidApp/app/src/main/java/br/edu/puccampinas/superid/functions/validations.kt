@@ -94,6 +94,12 @@ object validationUtils {
         val email = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         email.edit() { remove("user_email") }
 
+        //limpar que viu os termos de serviço
+        context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("has_seen_welcome", false)
+            .apply()
+
         val intent = Intent(context, WelcomeActivity::class.java)
         context.startActivity(intent)
     }

@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -20,10 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,6 +58,8 @@ fun RecoverPasswordForm(navController: NavController) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
+    val focusManager = LocalFocusManager.current
+
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             kotlinx.coroutines.delay(3000L)
@@ -68,7 +73,7 @@ fun RecoverPasswordForm(navController: NavController) {
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        /** SETA DE VOLTAR NO TOPO **/
+        // SETA DE VOLTAR NO TOPO
         IconButton(
             onClick = { navController.navigate("signin") },
             modifier = Modifier
@@ -83,7 +88,7 @@ fun RecoverPasswordForm(navController: NavController) {
             )
         }
 
-        /** CONTEÚdo AGRUPADO E CENTRALIZADO **/
+        // CONTEÚDO AGRUPADO E CENTRALIZADO
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -106,7 +111,13 @@ fun RecoverPasswordForm(navController: NavController) {
                 onValueChange = { email = it.replace(" ", "") },
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 trailingIcon = {
                     if (email.isNotBlank()) {
                         Icon(
@@ -186,7 +197,7 @@ fun RecoverPasswordForm(navController: NavController) {
             }
         }
 
-        /** SNACKBAR BONITO **/
+        // SNACKBAR
         AnimatedVisibility(
             visible = showSnackbar,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),

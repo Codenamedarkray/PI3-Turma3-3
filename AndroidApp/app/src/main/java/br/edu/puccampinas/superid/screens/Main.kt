@@ -122,7 +122,10 @@ import androidx.compose.foundation.layout.size
 //import androidx.compose.foundation.layout.BoxScopeInstance.align
 //import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import br.edu.puccampinas.superid.functions.decrypt
 import br.edu.puccampinas.superid.functions.encrypt
 
@@ -514,20 +517,28 @@ fun NewCategoryDialog(
         Font(R.font.montserrat_bold, FontWeight.Bold)
     )
 
+    val focusManager = LocalFocusManager.current
+
     AnimatedVisibility(
         visible = true,
         enter = fadeIn() + scaleIn(),
         exit = fadeOut() + scaleOut()
     ) {
         AlertDialog(
-            onDismissRequest = { onDismiss() },
+            onDismissRequest = {
+                focusManager.clearFocus()
+                onDismiss()
+            },
             title = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton(onClick = { onDismiss() }) {
+                    IconButton(onClick = {
+                        focusManager.clearFocus()
+                        onDismiss()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Fechar",
@@ -558,6 +569,17 @@ fun NewCategoryDialog(
                             unfocusedBorderColor = Color.Gray,
                             focusedLabelColor = Color(0xFF007BFF),
                             cursorColor = Color.White
+                        ),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (isCategoryNameValid && newCategoryName.isNotBlank()) {
+                                    focusManager.clearFocus()
+                                    onSave()
+                                }
+                            }
                         )
                     )
                     if (!isCategoryNameValid && newCategoryName.isNotBlank()) {
@@ -573,7 +595,10 @@ fun NewCategoryDialog(
             containerColor = Color(0xFF0D1117),
             confirmButton = {
                 Button(
-                    onClick = onSave,
+                    onClick = {
+                        focusManager.clearFocus()
+                        onSave()
+                    },
                     enabled = isCategoryNameValid && newCategoryName.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -861,6 +886,7 @@ fun NewPasswordDialog(
         Font(R.font.montserrat_bold, FontWeight.Bold)
     )
 
+    val focusManager = LocalFocusManager.current
     var visible by remember { mutableStateOf(false) }
     var showErrors by remember { mutableStateOf(false) }
 
@@ -882,6 +908,16 @@ fun NewPasswordDialog(
         visible = true
     }
 
+    fun trySave() {
+        if (isFormValid) {
+            focusManager.clearFocus()
+            visible = false
+            onSave()
+        } else {
+            showErrors = true
+        }
+    }
+
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn() + scaleIn(initialScale = 0.9f),
@@ -889,6 +925,7 @@ fun NewPasswordDialog(
     ) {
         AlertDialog(
             onDismissRequest = {
+                focusManager.clearFocus()
                 visible = false
                 onDismiss()
             },
@@ -899,6 +936,7 @@ fun NewPasswordDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(onClick = {
+                        focusManager.clearFocus()
                         visible = false
                         onDismiss()
                     }) {
@@ -966,7 +1004,8 @@ fun NewPasswordDialog(
                         isError = titleHasError,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                     )
 
                     OutlinedTextField(
@@ -976,7 +1015,8 @@ fun NewPasswordDialog(
                         singleLine = true,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                     )
 
                     OutlinedTextField(
@@ -990,7 +1030,8 @@ fun NewPasswordDialog(
                         isError = passwordHasError,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                     )
 
                     OutlinedTextField(
@@ -999,21 +1040,18 @@ fun NewPasswordDialog(
                         label = { Text("Descrição", fontFamily = montserrat) },
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        )
                     )
                 }
             },
             containerColor = Color(0xFF0D1117),
             confirmButton = {
                 Button(
-                    onClick = {
-                        if (isFormValid) {
-                            visible = false
-                            onSave()
-                        } else {
-                            showErrors = true
-                        }
-                    },
+                    onClick = { trySave() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
@@ -1057,6 +1095,8 @@ fun ViewPasswordDialog(
         Font(R.font.montserrat_bold, FontWeight.Bold)
     )
 
+    val focusManager = LocalFocusManager.current
+
     var isEditing by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var attemptedSave by remember { mutableStateOf(false) }
@@ -1077,17 +1117,39 @@ fun ViewPasswordDialog(
         errorCursorColor = Color.Red
     )
 
-    val canSave = !password.isBlank()
+    val canSave = password.isNotBlank()
+
+    fun trySave() {
+        attemptedSave = true
+        if (isEditing && canSave) {
+            onSave(
+                mapOf(
+                    "email" to email,
+                    "password" to encrypt(password),
+                    "description" to description,
+                    "accessToken" to generateRandomBase64Token()
+                )
+            )
+            isEditing = false
+            focusManager.clearFocus()
+        }
+    }
 
     AlertDialog(
-        onDismissRequest = { onDismiss() },
+        onDismissRequest = {
+            focusManager.clearFocus()
+            onDismiss()
+        },
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { onDismiss() }) {
+                IconButton(onClick = {
+                    focusManager.clearFocus()
+                    onDismiss()
+                }) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Fechar",
@@ -1144,7 +1206,8 @@ fun ViewPasswordDialog(
                         singleLine = true,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                     )
                 } else {
                     Box(
@@ -1170,7 +1233,8 @@ fun ViewPasswordDialog(
                         singleLine = true,
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                     )
                 } else {
                     Box(
@@ -1194,7 +1258,11 @@ fun ViewPasswordDialog(
                         placeholder = { Text("Descrição", fontFamily = montserrat, color = Color.Gray) },
                         textStyle = TextStyle(color = Color.White),
                         colors = textFieldColors,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        )
                     )
                 } else {
                     Box(
@@ -1237,6 +1305,7 @@ fun ViewPasswordDialog(
                             password = decrypt(initialData["password"].toString()) as? String ?: ""
                             description = initialData["description"] as? String ?: ""
                             attemptedSave = false
+                            focusManager.clearFocus()
                         },
                         border = BorderStroke(1.dp, Color.White),
                         modifier = Modifier
@@ -1249,26 +1318,18 @@ fun ViewPasswordDialog(
 
                 Button(
                     onClick = {
-                        attemptedSave = true
-                        if (isEditing && canSave) {
-                            onSave(
-                                mapOf(
-                                    "email" to email,
-                                    "password" to encrypt(password),
-                                    "description" to description,
-                                    "accessToken" to generateRandomBase64Token()
-                                )
-                            )
-                            isEditing = false
-                        } else if (!isEditing) {
+                        if (!isEditing) {
                             isEditing = true
+                        } else {
+                            trySave()
                         }
                     },
                     enabled = !isEditing || canSave,
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
-                    colors = if (!isEditing || canSave) ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                    colors = if (!isEditing || canSave)
+                        ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                     else ButtonDefaults.buttonColors(containerColor = Color.Gray),
                     contentPadding = PaddingValues()
                 ) {

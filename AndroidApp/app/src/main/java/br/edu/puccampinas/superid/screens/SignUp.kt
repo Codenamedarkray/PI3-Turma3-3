@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,13 +22,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -58,6 +62,8 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    val focusManager = LocalFocusManager.current
 
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -110,6 +116,13 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                         )
                     }
                 },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
@@ -124,7 +137,13 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 onValueChange = { email = it },
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
                 trailingIcon = {
                     if (email.isNotBlank()) {
                         Icon(
@@ -149,7 +168,13 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 label = { Text("Senha", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -165,8 +190,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
-
-
             AnimatedVisibility(visible = password.isNotBlank()) {
                 Text(
                     text = if (isPasswordValid) "Senha válida" else "A senha deve ter no mínimo 6 caracteres",
@@ -181,7 +204,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
 
             Button(
                 onClick = {
-                    if (isPasswordValid && !isLoading) {
+                    if (isNameValid && isEmailValid && isPasswordValid && !isLoading) {
                         coroutineScope.launch {
                             isLoading = true
                             performSignUp(
@@ -192,7 +215,6 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                                 onSuccess = {
                                     val intent = Intent(context, MainActivity::class.java)
                                     context.startActivity(intent)
-
                                     isLoading = false
                                 },
                                 onFailure = {
@@ -202,8 +224,8 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                                 }
                             )
                         }
-                    } else if (!isPasswordValid) {
-                        snackbarMessage = "Erro ao criar conta. Confira todos os campos e tente novamente."
+                    } else {
+                        snackbarMessage = "Erro: confira todos os campos e tente novamente."
                         showSnackbar = true
                     }
                 },

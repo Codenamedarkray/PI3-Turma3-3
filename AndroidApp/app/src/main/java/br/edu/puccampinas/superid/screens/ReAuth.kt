@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -27,10 +28,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -57,6 +60,8 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
     )
 
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -81,7 +86,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        IconButton(onClick = { performLogout(context) } ) {
+        IconButton(onClick = { performLogout(context) }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Logout",
@@ -110,7 +115,13 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                 label = { Text("Senha", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -164,7 +175,6 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                                 isLoading = false
                                 val intent = Intent(context, MainActivity::class.java)
                                 context.startActivity(intent)
-
                             },
                             onFailure = { exception ->
                                 Log.e("LOGIN", "ERRO AO AUTENTICAR: ${exception.message}")
@@ -174,7 +184,6 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                             }
                         )
                     }
-
                 },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -248,6 +257,8 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
 @Composable
 fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
     val montserrat = FontFamily(
         Font(R.font.montserrat_regular, FontWeight.Normal),
         Font(R.font.montserrat_bold, FontWeight.Bold)
@@ -264,12 +275,8 @@ fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController)
                 isVerified = userVerified
                 if (!isVerified) {
                     sendVerificationEmail(
-                        onSuccess = {
-
-                        },
-                        onFailure = {
-
-                        }
+                        onSuccess = { },
+                        onFailure = { }
                     )
                     resultMessage = "Seu email ainda não foi verificado.\nUm novo email de verificação foi enviado para $email."
                 } else {
@@ -293,10 +300,11 @@ fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController)
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF0D1117))
-            .padding(24.dp),
+            .padding(24.dp)
+            .imePadding(),  // Evita sobreposição com teclado
         contentAlignment = Alignment.Center
     ) {
         if (isLoading) {
@@ -319,7 +327,10 @@ fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController)
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    onClick = { navController.popBackStack() },
+                    onClick = {
+                        focusManager.clearFocus()  // Caso tenha foco residual
+                        navController.popBackStack()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     contentPadding = PaddingValues(),
                     modifier = Modifier
