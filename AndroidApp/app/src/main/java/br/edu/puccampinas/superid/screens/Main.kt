@@ -522,13 +522,27 @@ fun NewCategoryDialog(
         AlertDialog(
             onDismissRequest = { onDismiss() },
             title = {
-                Text(
-                    "Nova Categoria",
-                    fontFamily = montserrat,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = Color.White
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = { onDismiss() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Fechar",
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        "Nova Categoria",
+                        fontFamily = montserrat,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color.White,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -580,11 +594,6 @@ fun NewCategoryDialog(
                     ) {
                         Text("Salvar", color = Color.White, fontFamily = montserrat)
                     }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onDismiss() }) {
-                    Text("Cancelar", fontFamily = montserrat, color = Color(0xFF9CA3AF))
                 }
             }
         )
@@ -714,11 +723,17 @@ fun CategoryCard(
 
                     TextButton(
                         onClick = onAddPasswordClick,
-                        modifier = Modifier.align(Alignment.Start)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.Start)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Adicionar", tint = Color(0xFF00BCD4))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Adicionar senha", color = Color(0xFF00BCD4), fontFamily = montserrat)
+                        Text(
+                            "Adicionar senha",
+                            color = Color(0xFF00BCD4),
+                            fontFamily = montserrat,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
                     }
 
                     if (passwords.isNullOrEmpty()) {
@@ -878,15 +893,31 @@ fun NewPasswordDialog(
                 onDismiss()
             },
             title = {
-                Text(
-                    text = "Nova Senha",
-                    fontFamily = montserrat,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = Color.White,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = {
+                        visible = false
+                        onDismiss()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Fechar",
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        text = "Nova Senha",
+                        fontFamily = montserrat,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = Color.White,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
+                    )
+                }
             },
             text = {
                 Column(
@@ -974,57 +1005,37 @@ fun NewPasswordDialog(
             },
             containerColor = Color(0xFF0D1117),
             confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                Button(
+                    onClick = {
+                        if (isFormValid) {
+                            visible = false
+                            onSave()
+                        } else {
+                            showErrors = true
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isFormValid) Color.Transparent else Color.Gray
+                    ),
+                    contentPadding = PaddingValues()
                 ) {
-                    Button(
-                        onClick = {
-                            visible = false
-                            onDismiss()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
+                            .background(
+                                brush = if (isFormValid)
+                                    Brush.horizontalGradient(
+                                        colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                                    )
+                                else Brush.verticalGradient(listOf(Color.Gray, Color.Gray)),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("Cancelar", fontFamily = montserrat, color = Color.White)
-                    }
-
-                    Button(
-                        onClick = {
-                            if (isFormValid) {
-                                visible = false
-                                onSave()
-                            } else {
-                                showErrors = true
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isFormValid) Color.Transparent else Color.Gray
-                        ),
-                        contentPadding = PaddingValues()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    brush = if (isFormValid)
-                                        Brush.horizontalGradient(
-                                            colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
-                                        )
-                                    else Brush.verticalGradient(listOf(Color.Gray, Color.Gray)),
-                                    shape = MaterialTheme.shapes.medium
-                                )
-                                .fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Salvar", color = Color.White, fontFamily = montserrat)
-                        }
+                        Text("Salvar", color = Color.White, fontFamily = montserrat)
                     }
                 }
             }
@@ -1071,24 +1082,36 @@ fun ViewPasswordDialog(
     AlertDialog(
         onDismissRequest = { onDismiss() },
         title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Detalhes da Senha",
-                    fontFamily = montserrat,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = Color.White,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = if (isEditing) "Modo edição" else "Modo visualização",
-                    color = if (isEditing) Color(0xFF00BCD4) else Color(0xFF9CA3AF),
-                    fontSize = 14.sp,
-                    fontFamily = montserrat,
-                    modifier = Modifier.padding(top = 4.dp),
-                    textAlign = TextAlign.Center
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = { onDismiss() }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Fechar",
+                        tint = Color.White
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Detalhes da Senha",
+                        fontFamily = montserrat,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = Color.White
+                    )
+                    Text(
+                        text = if (isEditing) "Modo edição" else "Modo visualização",
+                        color = if (isEditing) Color(0xFF00BCD4) else Color(0xFF9CA3AF),
+                        fontSize = 14.sp,
+                        fontFamily = montserrat
+                    )
+                }
             }
         },
         text = {
@@ -1141,9 +1164,7 @@ fun ViewPasswordDialog(
                 if (isEditing) {
                     OutlinedTextField(
                         value = password,
-                        onValueChange = {
-                            password = it
-                        },
+                        onValueChange = { password = it },
                         placeholder = { Text("Senha", fontFamily = montserrat, color = Color.Gray) },
                         isError = passwordHasError,
                         singleLine = true,
@@ -1191,15 +1212,13 @@ fun ViewPasswordDialog(
         },
         containerColor = Color(0xFF0D1117),
         confirmButton = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
+                if (!isEditing) {
                     Button(
                         onClick = { showDeleteConfirmation = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
@@ -1209,62 +1228,69 @@ fun ViewPasswordDialog(
                     ) {
                         Text("Deletar", fontFamily = montserrat, color = Color.White)
                     }
-
-                    Button(
+                } else {
+                    OutlinedButton(
                         onClick = {
-                            attemptedSave = true
-                            if (isEditing && canSave) {
-                                onSave(
-                                    mapOf(
-                                        "email" to email,
-                                        "password" to encrypt(password),
-                                        "description" to description,
-                                        "accessToken" to generateRandomBase64Token()
-                                    )
-                                )
-                                isEditing = false
-                            } else if (!isEditing) {
-                                isEditing = true
-                            }
+                            isEditing = false
+                            // Restaurar dados iniciais
+                            email = initialData["email"] as? String ?: ""
+                            password = decrypt(initialData["password"].toString()) as? String ?: ""
+                            description = initialData["description"] as? String ?: ""
+                            attemptedSave = false
                         },
-                        enabled = !isEditing || canSave,
+                        border = BorderStroke(1.dp, Color.White),
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        colors = if (!isEditing || canSave) ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-                        else ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                        contentPadding = PaddingValues()
+                            .height(48.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    brush = if (!isEditing || canSave)
-                                        Brush.horizontalGradient(colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4)))
-                                    else
-                                        Brush.horizontalGradient(colors = listOf(Color.Gray, Color.Gray)),
-                                    shape = MaterialTheme.shapes.medium
-                                )
-                                .fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = if (isEditing) "Salvar" else "Editar",
-                                fontFamily = montserrat,
-                                color = Color.White
-                            )
-                        }
+                        Text("Cancelar", fontFamily = montserrat, color = Color.White)
                     }
                 }
-                Text(
-                    text = "Cancelar",
-                    color = Color(0xFF9CA3AF),
-                    fontSize = 14.sp,
-                    fontFamily = montserrat,
+
+                Button(
+                    onClick = {
+                        attemptedSave = true
+                        if (isEditing && canSave) {
+                            onSave(
+                                mapOf(
+                                    "email" to email,
+                                    "password" to encrypt(password),
+                                    "description" to description,
+                                    "accessToken" to generateRandomBase64Token()
+                                )
+                            )
+                            isEditing = false
+                        } else if (!isEditing) {
+                            isEditing = true
+                        }
+                    },
+                    enabled = !isEditing || canSave,
                     modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(top = 8.dp, end = 4.dp)
-                        .clickable { onDismiss() }
-                )
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = if (!isEditing || canSave) ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                    else ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                    contentPadding = PaddingValues()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                brush = if (!isEditing || canSave)
+                                    Brush.horizontalGradient(colors = listOf(Color(0xFF007BFF), Color(0xFF00BCD4)))
+                                else
+                                    Brush.horizontalGradient(colors = listOf(Color.Gray, Color.Gray)),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isEditing) "Salvar" else "Editar",
+                            fontFamily = montserrat,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     )
