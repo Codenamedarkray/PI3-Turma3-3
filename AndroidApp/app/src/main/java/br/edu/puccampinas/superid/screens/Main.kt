@@ -115,11 +115,14 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 //import androidx.compose.foundation.layout.BoxScopeInstance.align
 //import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.MoreVert
 import br.edu.puccampinas.superid.functions.decrypt
 import br.edu.puccampinas.superid.functions.encrypt
 
@@ -590,6 +593,7 @@ fun NewCategoryDialog(
 
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CategoryCard(
     categoryId: String,
@@ -610,6 +614,7 @@ fun CategoryCard(
 
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showCannotDeleteDialog by remember { mutableStateOf(false) }
+    var showContextMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -622,7 +627,13 @@ fun CategoryCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onExpandToggle() },
+                    .combinedClickable(
+                        onClick = { onExpandToggle() },
+                        onLongClick = {
+                            if (deletable) {
+                                showContextMenu = true
+                            }
+                        }),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -634,32 +645,61 @@ fun CategoryCard(
                     fontFamily = montserrat
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (!isEditMode) {
-                        Icon(
-                            imageVector = if (isExpanded) Icons.Default.ArrowDropDown else Icons.Default.ArrowRight,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                    }
 
-                    if (isEditMode && deletable) {
-                        IconButton(onClick = {
-                            if (passwords.isNullOrEmpty()) {
-                                showDeleteConfirmation = true
-                            } else {
-                                showCannotDeleteDialog = true
-                            }
-                        },
-                            modifier = Modifier.size(23.dp)
-                        ) {
+                Box {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (!isEditMode) {
                             Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Excluir",
-                                tint = Color(0xFFDC2626),
-                                modifier = Modifier.size(23.dp)
+                                imageVector = if (isExpanded) Icons.Default.ArrowDropDown else Icons.Default.ArrowRight,
+                                contentDescription = null,
+                                tint = Color.White
                             )
                         }
+
+                        if (isEditMode && deletable) {
+                            IconButton(onClick = {
+                                if (passwords.isNullOrEmpty()) {
+                                    showDeleteConfirmation = true
+                                } else {
+                                    showCannotDeleteDialog = true
+                                }
+                            },
+                                modifier = Modifier.size(23.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Excluir",
+                                    tint = Color(0xFFDC2626),
+                                    modifier = Modifier.size(23.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showContextMenu,
+                        onDismissRequest = { showContextMenu = false },
+                        modifier = Modifier.background(Color(0xFF0d1117))
+                            .border(
+                                width = 1.dp,
+                                color = Color(0xFFFFFFFF),
+                                shape = RoundedCornerShape(8.dp)
+                            ).padding(0.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text("Excluir Categoria", fontFamily = montserrat, color = Color.White)
+                                   },
+                            onClick = {
+                                showContextMenu = false
+                                if (passwords.isNullOrEmpty()) {
+                                    showDeleteConfirmation = true
+                                } else {
+                                    showCannotDeleteDialog = true
+                                }
+                            },
+                            modifier = Modifier.background(Color(0xFF0d1117))
+                        )
                     }
                 }
             }
