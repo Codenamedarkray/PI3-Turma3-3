@@ -97,7 +97,7 @@ export const getLoginStatus = onRequest(async (req, res) => {
     const created = loginData?.createdAt as Timestamp;
     const diff = now.seconds - created.seconds;
 
-    if (diff > 60 || (loginData?.attempts ?? 0) >= 3) {
+    if (diff > 60){
       await loginDocRef.delete();
       res.status(410).send({ status: "expired" });
       return;
@@ -110,9 +110,16 @@ export const getLoginStatus = onRequest(async (req, res) => {
 
     if (loginData?.user) {
       res.status(200).send({ status: "success", uid: loginData.user });
-    } else {
-      res.status(202).send({ status: "pending" });
+      return
     }
+
+    if ((loginData?.attempts ?? 0) >= 2) {
+      await loginDocRef.delete();
+      res.status(410).send({ status: "expired" });
+      return;
+    }
+
+    res.status(202).send({ status: "pending" });
   } catch (error) {
     logger.error("Erro em getLoginStatus", error);
     res.status(500).send("Internal server error");

@@ -331,7 +331,7 @@ fun QRScannerScreen() {
                                     invalidDialog = true
                                 }
                             )
-                            
+
                             scannedText = ""
 
                         }
