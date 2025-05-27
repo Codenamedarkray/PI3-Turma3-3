@@ -118,6 +118,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 //import androidx.compose.foundation.layout.BoxScopeInstance.align
 //import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
@@ -1141,23 +1142,33 @@ fun ViewPasswordDialog(
             onDismiss()
         },
         title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 8.dp)
             ) {
-                IconButton(onClick = {
-                    focusManager.clearFocus()
-                    onDismiss()
-                }) {
+                /** Icone X para fechar a tela*/
+                IconButton(
+                    onClick = {
+                        focusManager.clearFocus()
+                        onDismiss()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = (-4).dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Fechar",
                         tint = Color.White
                     )
                 }
+
+                // Título centralizado
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
