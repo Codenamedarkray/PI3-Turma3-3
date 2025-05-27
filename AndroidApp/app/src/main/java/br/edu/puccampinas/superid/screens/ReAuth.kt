@@ -224,8 +224,8 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
 
         AnimatedVisibility(
             visible = showSnackbar,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 24.dp, vertical = 70.dp)

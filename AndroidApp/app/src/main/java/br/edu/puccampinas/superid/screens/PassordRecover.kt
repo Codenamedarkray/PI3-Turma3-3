@@ -200,8 +200,8 @@ fun RecoverPasswordForm(navController: NavController) {
         // SNACKBAR
         AnimatedVisibility(
             visible = showSnackbar,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 70.dp)
