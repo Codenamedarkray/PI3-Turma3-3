@@ -15,6 +15,9 @@ import * as QRCode from "qrcode";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
+import express from "express";
+import cors from "cors";
+
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
@@ -26,17 +29,26 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 initializeApp();
 const db = getFirestore();
 
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+};
+
+const app = express();
+app.use(cors(corsOptions));
+app.use(express.json());
+
 /**
  * Firebase Function performAuth
  * Um site parceiro chama essa função com sua apiKey e url
  * Recebe um QR Code base64 com um token gerado para login
  */
-export const performAuth = onRequest(async (req, res) => {
+app.post("/performAuth", async (req, res) => {
   const { apiKey, url } = req.body;
 
   if (!apiKey || !url) {
-    res.status(400).send("Missing apiKey or url");
-    return;
+    return res.status(400).send("Missing apiKey or url");
   }
 
   try {
@@ -48,8 +60,7 @@ export const performAuth = onRequest(async (req, res) => {
 
     if (snapshot.empty) {
       logger.warn("Parceiro não autorizado:", { apiKey, url });
-      res.status(403).send("Unauthorized partner");
-      return;
+      return res.status(403).send("Unauthorized partner");
     }
 
     const loginToken = generateRandomBase64(256);
@@ -64,10 +75,10 @@ export const performAuth = onRequest(async (req, res) => {
 
     const qrCodeBase64 = await generateQRCodeBase64(loginToken);
 
-    res.status(200).send({ qrBase64: qrCodeBase64, loginToken: loginToken });
+    return res.status(200).send({ qrBase64: qrCodeBase64, loginToken });
   } catch (error) {
     logger.error("Erro em performAuth", error);
-    res.status(500).send("Internal server error");
+    return res.status(500).send("Internal server error");
   }
 });
 
@@ -75,12 +86,11 @@ export const performAuth = onRequest(async (req, res) => {
  * Firebase Function getLoginStatus
  * O site parceiro consulta se o QR code foi usado por algum usuário (verifica o status do loginToken)
  */
-export const getLoginStatus = onRequest(async (req, res) => {
+app.post("/getLoginStatus", async (req, res) => {
   const { loginToken } = req.body;
 
   if (!loginToken) {
-    res.status(400).send("Missing loginToken");
-    return;
+    return res.status(400).send("Missing loginToken");
   }
 
   try {
@@ -88,8 +98,7 @@ export const getLoginStatus = onRequest(async (req, res) => {
     const loginSnap = await loginDocRef.get();
 
     if (!loginSnap.exists) {
-      res.status(404).send("Token not found");
-      return;
+      return res.status(404).send("Token not found");
     }
 
     const loginData = loginSnap.data();
@@ -97,34 +106,33 @@ export const getLoginStatus = onRequest(async (req, res) => {
     const created = loginData?.createdAt as Timestamp;
     const diff = now.seconds - created.seconds;
 
-    if (diff > 60){
+    if (diff > 60) {
       await loginDocRef.delete();
-      res.status(410).send({ status: "expired" });
-      return;
+      return res.status(410).send({ status: "expired" });
     }
 
-    // Incrementar tentativas
     await loginDocRef.update({
       attempts: (loginData?.attempts ?? 0) + 1,
     });
 
     if (loginData?.user) {
-      res.status(200).send({ status: "success", uid: loginData.user });
-      return
+      return res.status(200).send({ status: "success", uid: loginData.user });
     }
 
     if ((loginData?.attempts ?? 0) >= 2) {
       await loginDocRef.delete();
-      res.status(410).send({ status: "expired" });
-      return;
+      return res.status(410).send({ status: "expired" });
     }
 
-    res.status(202).send({ status: "pending" });
+    return res.status(202).send({ status: "pending" });
   } catch (error) {
     logger.error("Erro em getLoginStatus", error);
-    res.status(500).send("Internal server error");
+    return res.status(500).send("Internal server error");
   }
 });
+
+// Exportar a função para o Firebase
+export const api = onRequest({ region: "southamerica-east1" }, app);
 
 /**
  * Gera uma string base64 aleatória com o tamanho desejado
