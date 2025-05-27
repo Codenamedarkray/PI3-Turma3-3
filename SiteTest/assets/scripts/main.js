@@ -58,9 +58,11 @@ try {
     if (data.status === "success") {
     clearInterval(pollInterval);
     document.getElementById("status").innerText = "Login efetuado com sucesso!";
+    // Redireciona após 1 segundo
     setTimeout(() => {
-        document.getElementById("status").innerText = "Usuário logado com sucesso!";
+    window.location.href = "logged.html"; 
     }, 1000);
+
     } else if (data.status === "expired") {
     clearInterval(pollInterval);
     document.getElementById("status").innerText = "Token expirado. Gerando novo QR Code...";
