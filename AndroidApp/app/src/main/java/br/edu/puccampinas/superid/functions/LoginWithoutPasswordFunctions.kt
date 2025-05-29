@@ -7,7 +7,10 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-
+/*
+*A funcao validQRcode le um qr code que sera verificado e dará uma resposta ao usuario
+*A funcao confirmlogin faz com que o firebase autenticator confirme o acesso ao usuario tendo uma certa prevencao de erro
+*/
 fun validQRCode(
     loginToken: String,
     onSuccess: (DocumentSnapshot)-> Unit,
