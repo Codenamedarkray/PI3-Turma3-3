@@ -9,19 +9,19 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-<<<<<<< Updated upstream
+
 /*
 *A funcao validQRcode le um qr code que sera verificado e dará uma resposta ao usuario
 *A funcao confirmlogin faz com que o firebase autenticator confirme o acesso ao usuario tendo uma certa prevencao de erro
 */
-=======
+
 
 val db = Firebase.firestore
 /**
  * Verifica se o qrcode escaneado ainda é valido
  * para fazer o login sem senha
  */
->>>>>>> Stashed changes
+
 fun validQRCode(
     loginToken: String,
     onSuccess: (DocumentSnapshot)-> Unit,
@@ -86,8 +86,6 @@ fun confirmLogin(loginToken: String, onComplete: () -> Unit) {
         onComplete()
     }
 }
-<<<<<<< Updated upstream
-=======
 
 /**
  * Tira o www. e .com da url para se tornar segura
@@ -157,5 +155,6 @@ fun addPasswordlessLogin(apiKey: String, onSuccess: () -> Unit, onFailure: () ->
 
         }
     )
+
 }
->>>>>>> Stashed changes
+
