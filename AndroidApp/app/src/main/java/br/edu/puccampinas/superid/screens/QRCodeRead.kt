@@ -157,7 +157,7 @@ fun ReadQRCodeScreen(
             permission = Manifest.permission.CAMERA,
             buttonLabelPermission = "Conceder permissão de câmera"
         ) {
-            QRScannerScreen()
+            QRScannerScreen(navController = navController)
         }
     }
 }
@@ -292,7 +292,7 @@ fun InvalidQRCodeDialog(onDismiss: () -> Unit) {
 
 
 @Composable
-fun QRScannerScreen() {
+fun QRScannerScreen(navController: NavController) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var scannedText by remember { mutableStateOf<String?>(null) }
@@ -370,6 +370,7 @@ fun QRScannerScreen() {
                 confirmLogin(
                     loginToken = doc?.getString("loginToken").toString()
                 )
+                navController.navigate("main")
             }
         )
     }
