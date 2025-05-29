@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import br.edu.puccampinas.superid.BottomNavigationBar
@@ -113,8 +114,18 @@ fun UserProfileScreen(innerPadding: PaddingValues){
     }
 
     if (isLoading) {
-        CircularProgressIndicator(color = Color.White)
-    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF000000))
+                .zIndex(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.Black)
+        }
+    }
+
+     else {
         Box {
             Column(
                 modifier = Modifier
