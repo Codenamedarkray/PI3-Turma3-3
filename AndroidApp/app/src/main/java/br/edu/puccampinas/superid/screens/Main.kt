@@ -446,6 +446,7 @@ fun PasswordScreen(innerPadding: PaddingValues) {
     }
 
     if (viewPasswordDialog) {
+
         ViewPasswordDialog(
             categoryId = selectedCategoryId,
             platformName = selectedPlatformName,
@@ -1272,7 +1273,7 @@ fun ViewPasswordDialog(
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
+                            onDone = { focusManager.clearFocus(force = true) }
                         )
                     )
                 } else {

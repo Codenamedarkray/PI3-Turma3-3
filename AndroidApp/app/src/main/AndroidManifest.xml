@@ -41,19 +41,22 @@
             android:name=".ReAuthenticationActivity"
             android:exported="false"
             android:label="@string/title_activity_re_authentication"
-            android:theme="@style/Theme.SuperID" />
+            android:theme="@style/Theme.SuperID"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".AuthenticationActivity"
             android:exported="false"
             android:label="@string/title_activity_authentication"
-            android:theme="@style/Theme.SuperID" />
+            android:theme="@style/Theme.SuperID"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:label="@string/title_activity_main"
-            android:theme="@style/Theme.SuperID" />
+            android:theme="@style/Theme.SuperID"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".WelcomeActivity"
