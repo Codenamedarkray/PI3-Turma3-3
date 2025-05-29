@@ -368,9 +368,12 @@ fun QRScannerScreen(navController: NavController) {
             onDismiss = { loginDialog = !loginDialog},
             onConfirm = { doc ->
                 confirmLogin(
-                    loginToken = doc?.getString("loginToken").toString()
+                    loginToken = doc?.getString("loginToken").toString(),
+                    onComplete = {
+                        navController.navigate("main")
+                    }
                 )
-                navController.navigate("main")
+
             }
         )
     }

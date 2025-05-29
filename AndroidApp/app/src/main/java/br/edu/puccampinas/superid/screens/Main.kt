@@ -1137,6 +1137,15 @@ fun ViewPasswordDialog(
         }
     }
 
+    onSave(
+        mapOf(
+            "email" to email,
+            "password" to encrypt(password),
+            "description" to description,
+            "accessToken" to generateRandomBase64Token()
+        )
+    )
+
     AlertDialog(
         onDismissRequest = {
             focusManager.clearFocus()
