@@ -1200,7 +1200,7 @@ fun ViewPasswordDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+                        /*.background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)*/
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -1225,7 +1225,7 @@ fun ViewPasswordDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
-                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+//                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
@@ -1252,7 +1252,7 @@ fun ViewPasswordDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
-                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+//                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
@@ -1280,7 +1280,7 @@ fun ViewPasswordDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
-                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
+//                            .background(Color(0xFF1F1F1F), shape = MaterialTheme.shapes.medium)
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {

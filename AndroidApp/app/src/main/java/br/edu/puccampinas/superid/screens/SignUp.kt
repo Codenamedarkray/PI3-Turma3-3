@@ -194,7 +194,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 Text(
                     text = if (isPasswordValid) "Senha válida" else "A senha deve ter no mínimo 6 caracteres",
                     color = if (isPasswordValid) Color(0xFF00FF00) else Color(0xFFFF5555),
-                    fontSize = 12.sp,
+                    fontSize = 15.sp,
                     fontFamily = montserrat,
                     modifier = Modifier
                         .fillMaxWidth()
