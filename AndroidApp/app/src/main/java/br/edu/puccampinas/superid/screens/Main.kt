@@ -164,6 +164,10 @@ fun PasswordScreen(innerPadding: PaddingValues) {
 
     var isCategoryEditMode by remember { mutableStateOf(false) }
 
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
+    var snackbarColor by remember { mutableStateOf(Color(0xFFDC2626)) }
+
     val montserrat = FontFamily(
         Font(R.font.montserrat_regular, FontWeight.Normal),
         Font(R.font.montserrat_bold, FontWeight.Bold)
@@ -195,172 +199,215 @@ fun PasswordScreen(innerPadding: PaddingValues) {
         )
     }
 
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            kotlinx.coroutines.delay(3000L)
+            showSnackbar = false
+        }
+    }
+
     val listState = rememberLazyListState()
 
-    LazyColumn(
-        modifier = Modifier
-            .padding(innerPadding)
-            .background(Color.Black)
-            .padding(16.dp),
-        state = listState,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Box(modifier = Modifier
+        .background(Color.Black)
+        .fillMaxSize()
     ) {
-        if (!verifiedEmail) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFFF3B3B), shape = RoundedCornerShape(8.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = message,
-                        color = Color.White,
-                        fontFamily = montserrat,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
+        LazyColumn(
+            modifier = Modifier
+                .padding(innerPadding)
+                .background(Color.Black)
+                .padding(16.dp),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (!verifiedEmail) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFF3B3B), shape = RoundedCornerShape(8.dp))
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = message,
+                            color = Color.White,
+                            fontFamily = montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
-        }
 
-        item {
-            /**Text(
+            item {
+                /**Text(
                 "SuperID",
                 fontFamily = montserrat,
                 fontWeight = FontWeight.Bold,
                 fontSize = 28.sp,
                 color = Color.White
-            )*/
-        }
+                )*/
+            }
 
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .border(1.dp, Color.White, shape = MaterialTheme.shapes.medium)
-            ) {
-                Row(modifier = Modifier.fillMaxSize()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .border(1.dp, Color.White, shape = MaterialTheme.shapes.medium)
+                ) {
+                    Row(modifier = Modifier.fillMaxSize()) {
 
-                    // Botão Editar Categorias
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clickable { isCategoryEditMode = !isCategoryEditMode }
-                            .background(if (isCategoryEditMode) Color(0xFF1F2937) else Color.Transparent),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                        // Botão Editar Categorias
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable { isCategoryEditMode = !isCategoryEditMode }
+                                .background(if (isCategoryEditMode) Color(0xFF1F2937) else Color.Transparent),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = if (!isCategoryEditMode) Icons.Default.Edit else Icons.Default.Close,
-                                contentDescription = null,
-                                tint = Color(0xFF9CA3AF),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                if (!isCategoryEditMode) "Editar Categorias" else "Cancelar Edição",
-                                fontFamily = montserrat,
-                                color = Color.White,
-                                fontSize = 14.sp
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (!isCategoryEditMode) Icons.Default.Edit else Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = Color(0xFF9CA3AF),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    if (!isCategoryEditMode) "Editar Categorias" else "Cancelar Edição",
+                                    fontFamily = montserrat,
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
-                    }
 
-                    // Divisor vertical
-                    Divider(
-                        color = Color.White,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .width(1.dp)
-                    )
+                        // Divisor vertical
+                        Divider(
+                            color = Color.White,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(1.dp)
+                        )
 
-                    // Botão Nova Categoria
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clickable { showCreateCategoryDialog = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                        // Botão Nova Categoria
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable { showCreateCategoryDialog = true },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = Color(0xFF9CA3AF),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                "Nova Categoria",
-                                fontFamily = montserrat,
-                                color = Color.White,
-                                fontSize = 14.sp
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color(0xFF9CA3AF),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    "Nova Categoria",
+                                    fontFamily = montserrat,
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
 
 
 
 
-        items(categories.size) { index ->
-            val category = categories[index]
-            val categoryId = category.id
-            val categoryName = categoryId
-            val isExpanded = expandedMap[categoryId] ?: false
-            val deletable = category.getBoolean("deletable") ?: true
-            val passwords = passwordsMap[categoryId] ?: emptyList()
+            items(categories.size) { index ->
+                val category = categories[index]
+                val categoryId = category.id
+                val categoryName = categoryId
+                val isExpanded = expandedMap[categoryId] ?: false
+                val deletable = category.getBoolean("deletable") ?: true
+                val passwords = passwordsMap[categoryId] ?: emptyList()
 
-            CategoryCard(
-                categoryId = categoryId,
-                categoryName = categoryName,
-                isExpanded = isExpanded,
-                passwords = passwords,
-                isEditMode = isCategoryEditMode,
-                deletable = deletable,
-                onExpandToggle = { expandedMap[categoryId] = !isExpanded },
-                onPasswordClick = { platformName, platformData ->
-                    selectedPlatformName = platformName
-                    selectedPlatformData = platformData
-                    selectedCategoryId = categoryId
-                    viewPasswordDialog = true
-                },
-                onDeleteCategory = { categoryIdToDelete ->
-                    deleteCategory(
-                        uid = uid,
-                        categoryId = categoryIdToDelete,
-                        onSuccess = {
-                            fetchPasswordData(
-                                uid = uid,
-                                onCategoriesFetched = { categories = it },
-                                onPasswordsFetched = { passwordsMap = it },
-                                onExpandedMapUpdated = { expanded ->
-                                    expanded.forEach { (key, value) ->
-                                        expandedMap.putIfAbsent(key, value)
+                CategoryCard(
+                    categoryId = categoryId,
+                    categoryName = categoryName,
+                    isExpanded = isExpanded,
+                    passwords = passwords,
+                    isEditMode = isCategoryEditMode,
+                    deletable = deletable,
+                    onExpandToggle = { expandedMap[categoryId] = !isExpanded },
+                    onPasswordClick = { platformName, platformData ->
+                        selectedPlatformName = platformName
+                        selectedPlatformData = platformData
+                        selectedCategoryId = categoryId
+                        viewPasswordDialog = true
+                    },
+                    onDeleteCategory = { categoryIdToDelete ->
+                        deleteCategory(
+                            uid = uid,
+                            categoryId = categoryIdToDelete,
+                            onSuccess = {
+                                fetchPasswordData(
+                                    uid = uid,
+                                    onCategoriesFetched = { categories = it },
+                                    onPasswordsFetched = { passwordsMap = it },
+                                    onExpandedMapUpdated = { expanded ->
+                                        expanded.forEach { (key, value) ->
+                                            expandedMap.putIfAbsent(key, value)
+                                        }
                                     }
-                                }
-                            )
-                        },
-                        onFailure = { }
-                    )
-                },
-                onAddPasswordClick = {
-                    selectedCategoryForPassword = categoryId
-                    showCreatePasswordDialog = true
-                }
-            )
+                                )
+                                snackbarMessage = "Categoria Deletada com Sucesso!"
+                                snackbarColor = Color(0xFF007BFF)
+                                showSnackbar = true
+                            },
+                            onFailure = {
+                                snackbarMessage = "Falha ao Deletar Categoria"
+                                snackbarColor = Color(0xFFDC2626)
+                                showSnackbar = true
+                            }
+                        )
+                    },
+                    onAddPasswordClick = {
+                        selectedCategoryForPassword = categoryId
+                        showCreatePasswordDialog = true
+                    }
+                )
+            }
+        }
+        AnimatedVisibility(
+            visible = showSnackbar,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 120.dp)
+        ) {
+            Snackbar(
+                containerColor = snackbarColor,
+                contentColor = Color.White,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = snackbarMessage,
+                    fontFamily = montserrat,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 
@@ -393,8 +440,15 @@ fun PasswordScreen(innerPadding: PaddingValues) {
                                 }
                             }
                         )
+                        snackbarMessage = "Nova Categoria Criada com Sucesso!"
+                        snackbarColor = Color(0xFF007BFF)
+                        showSnackbar = true
                     },
-                    onFailure = { }
+                    onFailure = {
+                        snackbarMessage = "Falha ao Criar Categoria"
+                        snackbarColor = Color(0xFFDC2626)
+                        showSnackbar = true
+                    }
                 )
             }
         )
@@ -437,8 +491,15 @@ fun PasswordScreen(innerPadding: PaddingValues) {
                                     }
                                 }
                             )
+                            snackbarMessage = "Nova Senha Cadastrada com Sucesso!"
+                            snackbarColor = Color(0xFF007BFF)
+                            showSnackbar = true
                         },
-                        onFailure = { }
+                        onFailure = {
+                            snackbarMessage = "Falha ao Cadastrar Nova Senha"
+                            snackbarColor = Color(0xFFDC2626)
+                            showSnackbar = true
+                        }
                     )
                 }
             }
@@ -474,9 +535,10 @@ fun PasswordScreen(innerPadding: PaddingValues) {
                                 }
                             }
                         )
+
                     },
                     onFailure = {
-                        Toast.makeText(context, "Erro ao salvar alterações", Toast.LENGTH_SHORT).show()
+
                     }
                 )
             },
@@ -496,9 +558,14 @@ fun PasswordScreen(innerPadding: PaddingValues) {
                                 }
                             }
                         )
+                        snackbarMessage = "Senha Deletada com Sucesso!"
+                        snackbarColor = Color(0xFF007BFF)
+                        showSnackbar = true
                     },
                     onFailure = {
-                        Toast.makeText(context, "Erro ao deletar senha", Toast.LENGTH_SHORT).show()
+                        snackbarMessage = "Falha ao Deletar a senha."
+                        snackbarColor = Color(0xFFDC2626)
+                        showSnackbar = true
                     }
                 )
             }
