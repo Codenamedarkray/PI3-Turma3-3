@@ -83,12 +83,14 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             .fillMaxSize()
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
+            .imePadding()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 100.dp),
+                .consumeWindowInsets(WindowInsets.ime)
+                .padding(top = 72.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

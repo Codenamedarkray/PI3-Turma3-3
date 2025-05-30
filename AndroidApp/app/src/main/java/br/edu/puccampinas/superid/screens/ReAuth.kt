@@ -51,6 +51,8 @@ import br.edu.puccampinas.superid.functions.validationUtils.getSavedEmail
 import br.edu.puccampinas.superid.functions.validationUtils.passwordIsInvalid
 import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import br.edu.puccampinas.superid.functions.validationUtils.reauthenticateUser
+import androidx.compose.foundation.layout.statusBarsPadding
+
 
 @Composable
 fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavController) {
@@ -84,6 +86,8 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF0D1117))
+            .statusBarsPadding()
+            .imePadding()
             .padding(horizontal = 24.dp)
     ) {
         IconButton(onClick = { performLogout(context) }) {
@@ -91,6 +95,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavContro
                 imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Logout",
                 tint = Color.White,
+
             )
         }
         Column(
