@@ -1,7 +1,6 @@
 package br.edu.puccampinas.superid.screens
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,22 +9,29 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -36,7 +42,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainActivity
 import br.edu.puccampinas.superid.R
-import br.edu.puccampinas.superid.WelcomeActivity
 import br.edu.puccampinas.superid.functions.performSignUp
 import kotlinx.coroutines.launch
 
@@ -58,6 +63,14 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val focusManager = LocalFocusManager.current
+
+    val isEmailValid = remember(email) {
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+    val isPasswordValid = password.length >= 6
+    val isNameValid = name.trim().length >= 1
+
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             kotlinx.coroutines.delay(3000L)
@@ -70,36 +83,14 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             .fillMaxSize()
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
+            .imePadding()
     ) {
-        // Botão Voltar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 36.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                    val intent = Intent(context, WelcomeActivity::class.java)
-                    context.startActivity(intent)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp),
+                .verticalScroll(rememberScrollState())
+                .consumeWindowInsets(WindowInsets.ime)
+                .padding(top = 72.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -110,7 +101,7 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 32.dp)
             )
 
             OutlinedTextField(
@@ -118,6 +109,22 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 onValueChange = { name = it },
                 label = { Text("Nome", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
+                trailingIcon = {
+                    if (name.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isNameValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isNameValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
@@ -132,7 +139,22 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 onValueChange = { email = it },
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
+                trailingIcon = {
+                    if (email.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isEmailValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isEmailValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
@@ -148,7 +170,13 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                 label = { Text("Senha", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -164,9 +192,21 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                     .padding(bottom = 16.dp)
             )
 
+            AnimatedVisibility(visible = password.isNotBlank()) {
+                Text(
+                    text = if (isPasswordValid) "Senha válida" else "A senha deve ter no mínimo 6 caracteres",
+                    color = if (isPasswordValid) Color(0xFF00FF00) else Color(0xFFFF5555),
+                    fontSize = 15.sp,
+                    fontFamily = montserrat,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 16.dp)
+                )
+            }
+
             Button(
                 onClick = {
-                    if (!isLoading) {
+                    if (isNameValid && isEmailValid && isPasswordValid && !isLoading) {
                         coroutineScope.launch {
                             isLoading = true
                             performSignUp(
@@ -186,6 +226,9 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
                                 }
                             )
                         }
+                    } else {
+                        snackbarMessage = "Erro: confira todos os campos e tente novamente."
+                        showSnackbar = true
                     }
                 },
                 modifier = Modifier
@@ -247,14 +290,13 @@ fun SignUpForm(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        // Snackbar bonito
         AnimatedVisibility(
             visible = showSnackbar,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 70.dp)
         ) {
             Snackbar(
                 containerColor = Color(0xFFDC2626),

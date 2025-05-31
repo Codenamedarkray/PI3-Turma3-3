@@ -81,4 +81,15 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx:25.1.3")
     implementation("com.google.firebase:firebase-auth-ktx:23.2.0")
 
+    //dependencias de câmera
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
+
+    //Zxing - Decodificador de QRcode
+    implementation(libs.scanner)
+
+
 }

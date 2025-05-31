@@ -69,7 +69,10 @@ fun createUser(context: Context, name: String, email: String, password: String, 
                                 userId = userId,
                                 onComplete = {
                                     saveEmailLocally(context, email)
-                                    sendVerificationEmail()
+                                    sendVerificationEmail(
+                                        onSuccess = {},
+                                        onFailure = {}
+                                    )
                                     Log.d("FIREBASE", "Usuário e categorias criados com sucesso")
                                     onSuccess()
                                 },
@@ -100,15 +103,20 @@ fun createUser(context: Context, name: String, email: String, password: String, 
 /**
  * Envia email de verificação via firebase Authentication para o novo usuário
  */
-fun sendVerificationEmail() {
+fun sendVerificationEmail(
+    onSuccess: () -> Unit,
+    onFailure: () -> Unit
+) {
     val user = Firebase.auth.currentUser
 
     user?.sendEmailVerification()
         ?.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Log.d("AUTH", "EMAIL ENVIADO COM SUCESSO")
+                onSuccess()
             } else {
                 Log.e("AUTH", "Erro ao enviar e-mail de validação: ${task.exception?.message}")
+                onFailure()
             }
         }
 }

@@ -11,8 +11,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -23,29 +28,42 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import br.edu.puccampinas.superid.MainActivity
 import br.edu.puccampinas.superid.R
+import br.edu.puccampinas.superid.ReAuthenticationActivity
+import br.edu.puccampinas.superid.functions.recoverPassword
+import br.edu.puccampinas.superid.functions.sendVerificationEmail
+import br.edu.puccampinas.superid.functions.validationUtils.checkUserEmailVerification
+import br.edu.puccampinas.superid.functions.validationUtils.getSavedEmail
 import br.edu.puccampinas.superid.functions.validationUtils.passwordIsInvalid
+import br.edu.puccampinas.superid.functions.validationUtils.performLogout
 import br.edu.puccampinas.superid.functions.validationUtils.reauthenticateUser
+import androidx.compose.foundation.layout.statusBarsPadding
+
 
 @Composable
-fun ReAuthenticationForm(modifier: Modifier = Modifier) {
+fun ReAuthenticationForm(modifier: Modifier = Modifier, navController: NavController) {
     val montserrat = FontFamily(
         Font(R.font.montserrat_regular, FontWeight.Normal),
         Font(R.font.montserrat_bold, FontWeight.Bold)
     )
 
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -68,8 +86,18 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF0D1117))
+            .statusBarsPadding()
+            .imePadding()
             .padding(horizontal = 24.dp)
     ) {
+        IconButton(onClick = { performLogout(context) }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Logout,
+                contentDescription = "Logout",
+                tint = Color.White,
+
+            )
+        }
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -77,7 +105,7 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "INSIRA A SENHA MESTRE",
+                text = "INSIRA A SENHA MESTRA",
                 fontFamily = montserrat,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
@@ -92,7 +120,13 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
                 label = { Text("Senha", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -108,9 +142,34 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
                     .padding(bottom = 24.dp)
             )
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Esqueceu a senha?",
+                    color = Color.White,
+                    fontFamily = montserrat,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Clique aqui",
+                    color = Color(0xFF007BFF),
+                    fontFamily = montserrat,
+                    fontSize = 14.sp,
+                    modifier = Modifier.clickable { navController.navigate("recover") }
+                )
+            }
+
             Button(
                 onClick = {
-                    if (!passwordIsInvalid(password) && !isLoading) {
+                    if (passwordIsInvalid(password)) {
+                        showSnackbar = true
+                    } else if (!isLoading) {
                         isButtonPressed = true
                         isLoading = true
                         reauthenticateUser(
@@ -168,30 +227,143 @@ fun ReAuthenticationForm(modifier: Modifier = Modifier) {
             }
         }
 
-        // Snackbar agora aparece embaixo fixo
         AnimatedVisibility(
             visible = showSnackbar,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 24.dp, vertical = 70.dp)
         ) {
-            Snackbar(
-                containerColor = Color(0xFFDC2626),
-                contentColor = Color.White,
+            Surface(
+                color = Color(0xFFDC2626),
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .fillMaxWidth()
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "SENHA INCORRETA",
-                    fontFamily = montserrat,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Box(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Senha incorreta. Tente novamente.",
+                        fontFamily = montserrat,
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
 }
+
+@Composable
+fun RecoverPassword(modifier: Modifier = Modifier, navController: NavController) {
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
+    val montserrat = FontFamily(
+        Font(R.font.montserrat_regular, FontWeight.Normal),
+        Font(R.font.montserrat_bold, FontWeight.Bold)
+    )
+
+    var isLoading by remember { mutableStateOf(true) }
+    var resultMessage by remember { mutableStateOf<String?>("Erro ao enviar email de recuperação. Tente novamente mais tarde.") }
+    var isVerified by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val email = getSavedEmail(context)
+        checkUserEmailVerification(
+            onResult = { userVerified ->
+                isVerified = userVerified
+                if (!isVerified) {
+                    sendVerificationEmail(
+                        onSuccess = { },
+                        onFailure = { }
+                    )
+                    resultMessage = "Seu email ainda não foi verificado.\nUm novo email de verificação foi enviado para $email."
+                } else {
+                    recoverPassword(
+                        email = email.toString(),
+                        onSuccess = {
+                            resultMessage = "Email de recuperação de senha enviado para $email."
+                        },
+                        onFailure = {
+                            resultMessage = "Erro ao enviar email de recuperação. Tente novamente mais tarde."
+                        }
+                    )
+                }
+                isLoading = false
+            },
+            onFailure = {
+                resultMessage = "Erro ao verificar email. Tente novamente."
+                isLoading = false
+            }
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF0D1117))
+            .padding(24.dp)
+            .imePadding(),  // Evita sobreposição com teclado
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(color = Color.White)
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Email,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = resultMessage ?: "Erro desconhecido.",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    fontFamily = montserrat
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = {
+                        focusManager.clearFocus()  // Caso tenha foco residual
+                        navController.popBackStack()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    listOf(Color(0xFF007BFF), Color(0xFF00BCD4))
+                                ),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Voltar",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontFamily = montserrat
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+

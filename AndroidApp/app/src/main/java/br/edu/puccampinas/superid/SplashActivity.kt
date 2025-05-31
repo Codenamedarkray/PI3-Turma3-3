@@ -1,10 +1,13 @@
 package br.edu.puccampinas.superid
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,10 +24,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.edu.puccampinas.superid.screens.WelcomeFlow
 import br.edu.puccampinas.superid.ui.theme.SuperIDTheme
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
-import br.edu.puccampinas.superid.screens.WelcomeFlow
 
 class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,28 +35,43 @@ class SplashActivity : ComponentActivity() {
 
         setContent {
             SuperIDTheme {
-                val sharedPreferences = getSharedPreferences("superid_prefs", MODE_PRIVATE)
-                var hasSeenWelcome by remember { mutableStateOf(sharedPreferences.getBoolean("has_seen_welcome", false)) }
+                val context = this@SplashActivity
+                var showSplash by remember { mutableStateOf(true) }
 
-                if (hasSeenWelcome) {
-                    // Já viu o carrossel e termos? Vai direto pro Login
-                    startActivity(Intent(this@SplashActivity, AuthenticationActivity::class.java))
-                    finish()
-                } else {
-                    // Primeira vez: mostra carrossel + termos
-                    WelcomeFlow(
-                        onFinish = {
-                            // Quando terminar carrossel + aceitar termos
-                            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
-                            startActivity(Intent(this@SplashActivity, AuthenticationActivity::class.java))
+                val sharedPreferences = context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
+                val hasSeenWelcome = sharedPreferences.getBoolean("has_seen_welcome", false)
+                val user = FirebaseAuth.getInstance().currentUser
+
+                when {
+                    showSplash -> {
+                        SplashScreen(onFinish = {
+                            showSplash = false
+                        })
+                    }
+
+                    user != null -> {
+                        LaunchedEffect(Unit) {
+                            context.startActivity(Intent(context, ReAuthenticationActivity::class.java))
                             finish()
                         }
-                    )
+                    }
+
+                    else -> {
+                        WelcomeFlow(onFinish = {
+                            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
+                            context.startActivity(Intent(context, AuthenticationActivity::class.java))
+                            finish()
+                        })
+                    }
+
                 }
             }
         }
     }
 }
+
+
+
 
 @Composable
 fun SplashScreen(onFinish: () -> Unit) {
@@ -82,9 +100,7 @@ fun SplashScreen(onFinish: () -> Unit) {
             .background(Color(0xFF0D1117)),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
                 painter = painterResource(id = R.drawable.ic_shield_lock),
                 contentDescription = "Logo",

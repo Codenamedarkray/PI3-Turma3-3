@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissoes para usar camera do android-->
+    <uses-feature android:name="android.hardware.camera.any"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,40 +17,53 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SuperID"
         tools:targetApi="31">
-        
+
+        <!-- Provider da camera -->
+        <provider
+            android:authorities="br.puc.tirarfoto.fileprovider"
+            android:name="androidx.core.content.FileProvider"
+            android:grantUriPermissions="true"
+            android:exported="false"
+            />
+
         <activity
             android:name=".SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.SuperID">
+            android:theme="@style/Theme.SuperID.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+
         <activity
             android:name=".ReAuthenticationActivity"
             android:exported="false"
             android:label="@string/title_activity_re_authentication"
-            android:theme="@style/Theme.SuperID" />
+            android:theme="@style/Theme.SuperID"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".AuthenticationActivity"
             android:exported="false"
             android:label="@string/title_activity_authentication"
-            android:theme="@style/Theme.SuperID" />
+            android:theme="@style/Theme.SuperID"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:label="@string/title_activity_main"
-            android:theme="@style/Theme.SuperID" />
+            android:theme="@style/Theme.SuperID"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".WelcomeActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.SuperID" />
+
     </application>
 
 </manifest>

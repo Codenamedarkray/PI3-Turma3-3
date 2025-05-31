@@ -7,11 +7,14 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -40,8 +43,8 @@ data class PageInfo(
 
 @Composable
 fun WelcomeFlow(onFinish: () -> Unit) {
-    var showTermsScreen by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    var showTermsScreen by rememberSaveable { mutableStateOf(false) }
 
     if (!showTermsScreen) {
         WelcomeCarouselScreen(onFinishWelcome = {
@@ -49,12 +52,15 @@ fun WelcomeFlow(onFinish: () -> Unit) {
         })
     } else {
         TermsScreen(onAccepted = {
-            val sharedPreferences = context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
-            sharedPreferences.edit().putBoolean("has_seen_welcome", true).apply()
+            context.getSharedPreferences("superid_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("has_seen_welcome", true)
+                .apply()
             onFinish()
         })
     }
 }
+
 
 @Composable
 fun WelcomeCarouselScreen(onFinishWelcome: () -> Unit) {
@@ -67,10 +73,10 @@ fun WelcomeCarouselScreen(onFinishWelcome: () -> Unit) {
 
     val pages = listOf(
         PageInfo("Bem-vindo ao $appName", "Seu cofre digital de senhas com segurança e praticidade.", R.drawable.ic_shield_lock),
-        PageInfo("Armazene Suas Senhas", "Organize todas as suas senhas em categorias personalizadas.", R.drawable.ic_shield_lock),
-        PageInfo("Login por QR Code", "Faça login em sites usando QR Code, de forma rápida e segura.", R.drawable.ic_shield_lock),
-        PageInfo("Segurança Avançada", "Criptografia forte protege suas senhas a todo momento.", R.drawable.ic_shield_lock),
-        PageInfo("Comece Agora", "Simplifique sua vida com o SuperID. Vamos começar!", R.drawable.ic_shield_lock)
+        PageInfo("Armazene Suas Senhas", "Organize todas as suas senhas em categorias personalizadas.", R.drawable.ic_file_earmark_lock),
+        PageInfo("Login por QR Code", "Faça login em sites usando QR Code, de forma rápida e segura.", R.drawable.ic_qr_code),
+        PageInfo("Segurança Avançada", "Criptografia forte protege suas senhas a todo momento.", R.drawable.ic_lock_fill),
+        PageInfo("Comece Agora", "Simplifique sua vida com o SuperID. Vamos começar!", R.drawable.ic_rocket_takeoff_fill)
     )
 
     val pagerState = rememberPagerState(initialPage = 0)
@@ -220,16 +226,19 @@ fun TermsScreen(onAccepted: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0D1117))
-            .padding(horizontal = 24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 36.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
                     text = "Termos de Uso",
                     fontSize = 28.sp,
@@ -241,11 +250,66 @@ fun TermsScreen(onAccepted: () -> Unit) {
                 )
 
                 Text(
-                    text = "Aqui você poderá visualizar os termos de uso do SuperID.\n\n(Lembre-se de adaptar esse texto depois!)",
+                    text = "Termos de Uso do SuperID\n" +
+                            "Última atualização: [20/05/2025]\n" +
+                            "\n" +
+                            "Bem-vindo ao SuperID! Ao utilizar nosso aplicativo, você concorda com os seguintes Termos de Uso. Leia atentamente antes de usar o aplicativo.\n" +
+                            "\n" +
+                            "1. Aceitação dos Termos\n" +
+                            "Ao acessar e utilizar o SuperID, você concorda em cumprir estes Termos de Uso e todas as leis e regulamentos aplicáveis. Caso não concorde com estes termos, por favor, não utilize o aplicativo.\n" +
+                            "\n" +
+                            "2. Descrição do Aplicativo\n" +
+                            "O SuperID é um aplicativo de segurança digital que permite ao usuário:\n" +
+                            "\n" +
+                            "Armazenar com segurança informações como e-mails e senhas;\n" +
+                            "\n" +
+                            "Utilizar a câmera do dispositivo para leitura de QR Codes;\n" +
+                            "\n" +
+                            "Interagir com serviços em nuvem por meio do Firebase, incluindo autenticação e armazenamento de dados.\n" +
+                            "\n" +
+                            "3. Coleta e Uso de Dados\n" +
+                            "Ao utilizar o SuperID, coletamos e armazenamos dados pessoais fornecidos por você, tais como:\n" +
+                            "\n" +
+                            "Endereço de e-mail;\n" +
+                            "\n" +
+                            "Senhas (armazenadas de forma segura e criptografada);\n" +
+                            "\n" +
+                            "Dados de uso e interação com o aplicativo;\n" +
+                            "\n" +
+                            "Imagens capturadas pela câmera, exclusivamente para fins de leitura de QR Codes.\n" +
+                            "\n" +
+                            "Esses dados são armazenados com segurança utilizando os serviços do Firebase (Google LLC).\n" +
+                            "\n" +
+                            "4. Permissões Necessárias\n" +
+                            "Para o pleno funcionamento do SuperID, solicitamos as seguintes permissões:\n" +
+                            "\n" +
+                            "Acesso à câmera: necessário para escanear QR Codes;\n" +
+                            "\n" +
+                            "Acesso à internet: necessário para sincronização com o Firebase.\n" +
+                            "\n" +
+                            "O uso dessas permissões é restrito às funcionalidades essenciais do aplicativo e não é feito uso indevido ou contínuo sem necessidade.\n" +
+                            "\n" +
+                            "5. Responsabilidades do Usuário\n" +
+                            "Você é o único responsável por manter a confidencialidade de suas credenciais de acesso e pelas informações que decide armazenar no aplicativo. Recomendamos o uso de senhas fortes e únicas.\n" +
+                            "\n" +
+                            "6. Segurança e Criptografia\n" +
+                            "O SuperID utiliza criptografia para armazenar dados sensíveis como senhas, garantindo que terceiros não autorizados não possam acessá-los, mesmo em caso de violação do banco de dados.\n" +
+                            "\n" +
+                            "7. Limitação de Responsabilidade\n" +
+                            "Embora tomemos medidas de segurança avançadas, o SuperID não se responsabiliza por perdas causadas por:\n" +
+                            "\n" +
+                            "Uso indevido do aplicativo;\n" +
+                            "\n" +
+                            "Vazamento de dados por negligência do usuário;\n" +
+                            "\n" +
+                            "Interrupções ou falhas nos serviços do Firebase ou na conexão com a internet.\n" +
+                            "\n" +
+                            "8. Modificações nos Termos\n" +
+                            "Reservamo-nos o direito de atualizar estes Termos de Uso a qualquer momento. Notificaremos os usuários em caso de alterações significativas. O uso contínuo do aplicativo após tais mudanças constitui aceitação dos novos termos.\n",
                     fontSize = 16.sp,
                     fontFamily = montserrat,
                     color = Color(0xFF9CA3AF),
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }

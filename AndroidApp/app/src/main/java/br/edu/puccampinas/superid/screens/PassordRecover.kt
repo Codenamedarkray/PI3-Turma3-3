@@ -8,9 +8,12 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,16 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.edu.puccampinas.superid.R
+import br.edu.puccampinas.superid.functions.forceRecoverPassword
 import br.edu.puccampinas.superid.functions.recoverPassword
 import br.edu.puccampinas.superid.functions.validationUtils.emailIsInvalid
 import kotlinx.coroutines.launch
@@ -46,6 +52,13 @@ fun RecoverPasswordForm(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
+    var snackbarColor by remember { mutableStateOf(Color(0xFFDC2626)) }
+
+    val isEmailValid = remember(email) {
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
@@ -60,33 +73,26 @@ fun RecoverPasswordForm(navController: NavController) {
             .background(Color(0xFF0D1117))
             .padding(horizontal = 24.dp)
     ) {
-        // Botão voltar
-        Row(
+        // SETA DE VOLTAR NO TOPO
+        IconButton(
+            onClick = { navController.navigate("signin") },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 36.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .align(Alignment.TopStart)
+                .padding(top = 36.dp)
         ) {
-            Button(
-                onClick = { navController.navigate("signin") },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Voltar",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
         }
 
-        // Conteúdo principal
+        // CONTEÚDO AGRUPADO E CENTRALIZADO
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp),
+                .padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -105,14 +111,29 @@ fun RecoverPasswordForm(navController: NavController) {
                 onValueChange = { email = it.replace(" ", "") },
                 label = { Text("E-mail", fontFamily = montserrat) },
                 textStyle = TextStyle(color = Color.White),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
+                trailingIcon = {
+                    if (email.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isEmailValid) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isEmailValid) Color(0xFF00FF00) else Color.Red
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF007BFF),
                     unfocusedBorderColor = Color.Gray
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 24.dp)
             )
 
             Button(
@@ -120,24 +141,27 @@ fun RecoverPasswordForm(navController: NavController) {
                     if (!isLoading) {
                         coroutineScope.launch {
                             isLoading = true
-                            if (emailIsInvalid(email)) {
-                                recoverPassword(
+                            if (!emailIsInvalid(email)) {
+                                forceRecoverPassword(
                                     email = email,
                                     onSuccess = {
                                         snackbarMessage = "Link enviado para o e-mail."
                                         showSnackbar = true
                                         isLoading = false
+                                        snackbarColor = Color(0xFF007BFF)
                                     },
                                     onFailure = {
                                         snackbarMessage = "Erro: ${it.message ?: "Erro desconhecido"}"
                                         showSnackbar = true
                                         isLoading = false
+                                        snackbarColor = Color(0xFFDC2626)
                                     }
                                 )
                             } else {
                                 snackbarMessage = "E-mail inválido"
                                 showSnackbar = true
                                 isLoading = false
+                                snackbarColor = Color(0xFFDC2626)
                             }
                         }
                     }
@@ -167,27 +191,23 @@ fun RecoverPasswordForm(navController: NavController) {
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text(
-                            text = "Enviar Link",
-                            color = Color.White,
-                            fontSize = 16.sp
-                        )
+                        Text("Enviar Link", color = Color.White, fontSize = 16.sp)
                     }
                 }
             }
         }
 
-        // Snackbar Bonito
+        // SNACKBAR
         AnimatedVisibility(
             visible = showSnackbar,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 70.dp)
         ) {
             Snackbar(
-                containerColor = Color(0xFFDC2626),
+                containerColor = snackbarColor,
                 contentColor = Color.White,
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier
