@@ -40,7 +40,9 @@ Você pode testar o recurso de **Login sem Senha** utilizando o site de testes o
 ➡️ Acesse: **[https://site-test-superid.netlify.app/](https://site-test-superid.netlify.app/)**
 
 1. Clique na opção **"Login com Super ID"**.
-![Tela principal do Site](./Documentation/preview%20images/Site-Test-MainScreen.png)
+
+<img src="./Documentation/preview%20images/Site-Test-MainScreen.jpeg" style="width:600px;">
+
 2. O site irá gerar um **QR Code**.
 3. Abra o aplicativo e escaneie o QR Code usando a funcionalidade de leitura do Super-ID.
 4. Após escanear, o login será efetuado automaticamente no site.
