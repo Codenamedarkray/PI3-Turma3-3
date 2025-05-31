@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.SuperID.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Fundo preto -->
+        <item name="android:windowBackground">@android:color/black</item>
+
+        <!-- Remove animação e ícones do splash automático (Android 12+) -->
+        <item name="android:windowSplashScreenAnimatedIcon">@null</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@null</item>
+        <item name="android:windowSplashScreenBackground">@android:color/black</item>
+
+        <!-- Remove preview automática -->
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+
+</resources>
